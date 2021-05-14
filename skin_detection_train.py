@@ -128,6 +128,9 @@ if __name__ == "__main__":
     elif dataset in ('light', 'medium', 'dark'):
         name_in = 'Schmugge'
         name_out = dataset
+    else:
+        name_in = dataset
+        name_out = dataset
 
     in_dir = f'./dataset/{name_in}'
     out = f'./{name_out}.csv'

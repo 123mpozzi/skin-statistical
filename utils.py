@@ -76,6 +76,28 @@ def get_test_paths(csv_file) -> list:
     return files
 
 
+def get_all_paths(csv_file) -> list:
+    # read the images CSV (ori_image_filename.ext, gt_image_filename.ext)
+    file = open(csv_file)
+    file3c = file.read().splitlines()
+    file.close()
+
+    files = []
+
+    for entry in file3c:
+        ori_path = entry.split(csv_sep)[0]
+        gt_path = entry.split(csv_sep)[1]
+        
+        files.append((ori_path, gt_path))
+    
+    if len(files) == 0:
+        exit('No files found!')
+    else:
+        print(f'Found {len(files)} files')
+    
+    return files
+
+
 # leaves only the entries of the corresponding
 # csv must have 4 cols!
 # skintone may be: 'dark', 'light', 'medium'

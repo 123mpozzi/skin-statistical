@@ -1,7 +1,8 @@
-dataset
 __pycache__
 image
 mask
 predictions
-test
+predictions_old
 venv
+dataset
+*.csv
