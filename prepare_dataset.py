@@ -456,29 +456,29 @@ def process_random(csv_file: str, outfile: str, ori_out_dir = 'new_ori', gt_out_
 
 
 # generate datasets metadata
+if __name__ == "__main__":
+    # total arguments
+    n = len(sys.argv)
 
-# total arguments
-n = len(sys.argv)
+    if n != 2:
+        exit('There must be 1 argument, that is the dataset name (Schmugge, ECU, HGR)')
 
-if n != 2:
-    exit('There must be 1 argument, that is the dataset name (Schmugge, ECU, HGR)')
+    dataset = sys.argv[1] # first argument, argv[0] is the name of the script
+    #dataset = 'Schmugge'
+    dataset = dataset.upper()
 
-dataset = sys.argv[1] # first argument, argv[0] is the name of the script
-#dataset = 'Schmugge'
-dataset = dataset.upper()
-
-if dataset == 'ECU':
-    import_dataset("dataset/import_ecu.json")
-elif dataset == 'HGR' or dataset == 'HGR_small':
-    # hgr is composed of 3 sub datasets
-    import_dataset("dataset/import_hgr1.json")
-    import_dataset("dataset/import_hgr2a.json")
-    import_dataset("dataset/import_hgr2b.json")
-    process_random('dataset/HGR_small/data.csv', 'dataset/HGR_small/data.csv')
-elif dataset == 'SCHMUGGE':
-    # schmugge dataset has really different filename formats but has a custom config file included
-    schm = read_schmugge('dataset/Schmugge/data/.config.SkinImManager', 'dataset/Schmugge/data/data')
-    # load a specific schmugge data.csv (use process_schmugge to create new splits)
-    import_schmugge(schm, 'dataset/Schmugge/data.csv', 'dataset/Schmugge/schmugge_import.csv', ori_out_dir='dataset/Schmugge/newdata/ori', gt_out_dir='dataset/Schmugge/newdata/gt')
-else:
-    exit('Invalid dataset!')
+    if dataset == 'ECU':
+        import_dataset("dataset/import_ecu.json")
+    elif dataset == 'HGR' or dataset == 'HGR_small':
+        # hgr is composed of 3 sub datasets
+        import_dataset("dataset/import_hgr1.json")
+        import_dataset("dataset/import_hgr2a.json")
+        import_dataset("dataset/import_hgr2b.json")
+        process_random('dataset/HGR_small/data.csv', 'dataset/HGR_small/data.csv')
+    elif dataset == 'SCHMUGGE':
+        # schmugge dataset has really different filename formats but has a custom config file included
+        schm = read_schmugge('dataset/Schmugge/data/.config.SkinImManager', 'dataset/Schmugge/data/data')
+        # load a specific schmugge data.csv (use process_schmugge to create new splits)
+        import_schmugge(schm, 'dataset/Schmugge/data.csv', 'dataset/Schmugge/schmugge_import.csv', ori_out_dir='dataset/Schmugge/newdata/ori', gt_out_dir='dataset/Schmugge/newdata/gt')
+    else:
+        exit('Invalid dataset!')

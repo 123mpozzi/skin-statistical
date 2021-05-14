@@ -1,6 +1,7 @@
+from prepare_dataset import process_schmugge, read_schmugge
 from PIL import Image
 import pandas as pd
-from utils import get_test_paths
+from utils import csv_note_count, csv_skintone_count, csv_skintone_filter, get_test_paths
 from tqdm import tqdm
 import sys, os
 
@@ -80,7 +81,28 @@ if __name__ == "__main__":
         exit('''There must be 1 or 2 arguments!
         Usage: python skin_detection_test.py db-model [db-predict]
         db examples: Schmugge, ECU, HGR''')
+    
 
+    if db_pred in ('light', 'medium', 'dark'):
+        # re-import Schmugge
+        schm = read_schmugge('dataset/Schmugge/data/.config.SkinImManager', 'dataset/Schmugge/data/data')
+        process_schmugge(schm, 'dataset/Schmugge/data.csv', ori_out_dir='dataset/Schmugge/newdata/ori', gt_out_dir='dataset/Schmugge/newdata/gt')
+
+
+        # Set to True to filter a dataset CSV by given skintone,
+        # the other entries will be deleted from the CSV file
+        filter_by_skintone = True
+        filter_by_skintone_type = db_pred # light medium dark nd
+        filter_by_skintone_csv = 'dataset/Schmugge/data.csv' # dataset to process
+        filter_mode = 'test'
+
+        if filter_by_skintone:
+            csv_skintone_filter(filter_by_skintone_csv, filter_by_skintone_type, mode = filter_mode)
+            csv_skintone_count(filter_by_skintone_csv, filter_by_skintone_type)
+            csv_note_count(filter_by_skintone_csv, filter_mode)
+        
+        in_dir = './dataset/Schmugge'
+    
     # Create output dirs if not exist
     os.makedirs(out_p, exist_ok=True)
     os.makedirs(out_y, exist_ok=True)

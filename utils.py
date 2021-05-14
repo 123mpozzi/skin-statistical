@@ -1,4 +1,4 @@
-import os
+import random
 
 # CSV separator used into data.csv file
 csv_sep = '?'
@@ -74,3 +74,97 @@ def get_test_paths(csv_file) -> list:
         print(f'Found testing split of {len(files)} files')
     
     return files
+
+
+# leaves only the entries of the corresponding
+# csv must have 4 cols!
+# skintone may be: 'dark', 'light', 'medium'
+def csv_skintone_filter(csv_file: str, skintone: str, mode = 'train'):
+    # read the images CSV
+    file = open(csv_file)
+    file3c = file.read().splitlines()
+    file.close()
+
+    # rewrite csv file
+    with open(csv_file, 'w') as out:
+        for entry in file3c:
+            ori_path = entry.split(csv_sep)[0]
+            gt_path = entry.split(csv_sep)[1]
+
+            skint = entry.split(csv_sep)[3]
+
+            if skint != skintone: # should not be filtered
+                if mode != 'train':
+                    if (random.random() < 0.8): # happens 80% of the time
+                        note = 'tr'
+                    else: # happens 20% of the time
+                        note = 'va'
+                else:
+                    note = 'te'
+                    #note = entry.split(csv_sep)[2]
+                
+                #print(f"NOT {ori_path}{csv_sep}{gt_path}{csv_sep}{note}{csv_sep}{skint}\n")
+                out.write(f"{ori_path}{csv_sep}{gt_path}{csv_sep}{note}{csv_sep}{skint}\n")
+            else: # should be in the filter
+                if mode == 'train':
+                    if (random.random() < 0.8): # happens 80% of the time
+                        note = 'tr'
+                    else: # happens 20% of the time
+                        note = 'va'
+                else:
+                    note = 'te'
+                    #note = entry.split(csv_sep)[2]
+                
+                #print(f"{ori_path}{csv_sep}{gt_path}{csv_sep}{note}{csv_sep}{skintone}\n")
+                out.write(f"{ori_path}{csv_sep}{gt_path}{csv_sep}{note}{csv_sep}{skintone}\n")
+
+
+def csv_skintone_count(csv_file: str, skintone: str):
+    # read the images CSV
+    file = open(csv_file)
+    file3c = file.read().splitlines()
+    file.close()
+
+    j = 0
+    # rewrite csv file
+    with open(csv_file, 'r') as out:
+        for entry in file3c:
+            ori_path = entry.split(csv_sep)[0]
+            gt_path = entry.split(csv_sep)[1]
+            note = entry.split(csv_sep)[2]
+            skint = entry.split(csv_sep)[3]
+
+            if skint == skintone:
+                j += 1
+                print(f"{ori_path}{csv_sep}{gt_path}{csv_sep}{note}{csv_sep}{skint}")
+    
+    print(f"Found {j} items of type {skintone}")
+
+
+def csv_note_count(csv_file: str, mode: str):
+    # read the images CSV
+    file = open(csv_file)
+    file3c = file.read().splitlines()
+    file.close()
+
+    j = 0
+    # rewrite csv file
+    with open(csv_file, 'r') as out:
+        for entry in file3c:
+            ori_path = entry.split(csv_sep)[0]
+            gt_path = entry.split(csv_sep)[1]
+            nt = entry.split(csv_sep)[2]
+            skint = entry.split(csv_sep)[3]
+
+            notes = []
+            if mode == 'train':
+                notes.append("tr")
+                notes.append("va")
+            else:
+                notes.append("te")
+
+            if nt in notes:
+                j += 1
+                print(f"{ori_path}{csv_sep}{gt_path}{csv_sep}{nt}{csv_sep}{skint}")
+    
+    print(f"Found {j} items of type {mode}")
