@@ -1,8 +1,10 @@
-import os  
+import os, sys
 from PIL import Image
 import numpy as np
 import csv
 import pandas as pd
+from utils import get_train_paths
+from tqdm import tqdm
 
 
 ##src- path of image file
@@ -54,8 +56,9 @@ def to_list(r,g,b,probability):
 
 def data(probability):  ## just a function to make list of rgb and prob
     arr = []
-    progress = 0
-    for r in range(256):
+    
+    #for r in range(256):
+    for r in tqdm(range(256)):
         for g in range(256):
             for b in range(256):
                 arr.append(to_list(r,g,b,probability[r][g][b]))
@@ -64,8 +67,8 @@ def data(probability):  ## just a function to make list of rgb and prob
     return arr     
 
 
-def create_csv(probability): ##this function creats csv 
-    myFile = open('train.csv', 'w', newline = '')
+def create_csv(probability, filename): ##this function creats csv 
+    myFile = open(filename, 'w', newline = '')
     with myFile:  
         writer = csv.writer(myFile)
         writer.writerow(["Red", "Green", "Blue", "Probability"])
@@ -73,31 +76,64 @@ def create_csv(probability): ##this function creats csv
     print('Training Completed')
 
 
-def main():
+def main(image_paths, out):
 
     pixels = np.zeros((256,256,256))
     skin = np.zeros((256,256,256)) 
     non_skin = np.zeros((256,256,256))    
     probability = np.zeros((256,256,256))
 
-    files_actual = os.listdir('image') 
-    files_mask = os.listdir('mask')
-    # len(files_actual)
-    for i in range(5): ##iterating through all images
-       
-        image_actual_path = 'image\\'
-        imgae_mask_path = 'mask\\'
+    #files_actual = os.listdir('image')      #all filenames of that particular dir -- image
+    #files_mask = os.listdir('mask')         #all filenames of that particular dir -- mask
+    
+    print('Reading training files...')
 
-        pix_val_actual = read_image(open_image(image_actual_path+files_actual[i])) ## storing the pixels of actual picture..
-        pix_val_mask = read_image(open_image(imgae_mask_path+files_mask[i])) ## storing the pixels of mask picture..
-        
-        print(image_actual_path+files_actual[i], imgae_mask_path+files_mask[i])
+    #for i in range(len(files_actual)): ##iterating through all images
+    for i in tqdm(image_paths):
+        im_abspath = os.path.abspath(i[0]) 
+        y_abspath = os.path.abspath(i[1])
+       
+        #image_actual_path = 'image\\'
+        #image_mask_path = 'mask\\'
+
+        #pix_val_actual = read_image(open_image(image_actual_path+files_actual[i])) ## storing the pixels of actual picture..
+        #pix_val_mask = read_image(open_image(image_mask_path+files_mask[i])) ## storing the pixels of mask picture..
+        pix_val_actual = read_image(open_image(im_abspath))
+        pix_val_mask = read_image(open_image(y_abspath))
+
+        #print(image_actual_path+files_actual[i], image_mask_path+files_mask[i])
         
         pixels, skin, non_skin = train_data(pixels, pix_val_actual, pix_val_mask, skin, non_skin) ## this returns the skin value and non_skin value 
 #        
     probability = set_probability(pixels, skin, non_skin, probability) ## this returns the probability
-    create_csv(probability) ## creating CSV from that probabilty and rgb
-    
+
+    print('Saving training data...')
+    create_csv(probability, out) ## creating CSV from that probabilty and rgb
+
+
+## USAGE: python skin_detection_train.py <name of the dataset (Schmugge, ECU, HGR)>
 if __name__ == "__main__":
-    
-    main()
+    # total arguments
+    n = len(sys.argv)
+
+    if n != 2:
+        exit('''There must be 1 argument!
+        Usage: python skin_detection_train.py <db-name>
+        db examples: Schmugge, ECU, HGR''')
+
+    dataset = sys.argv[1]
+
+    if dataset == 'HGR':
+        dataset = 'HGR_small'
+    elif dataset in ('light', 'medium', 'dark'):
+        name_in = 'Schmugge'
+        name_out = dataset
+
+    in_dir = f'./dataset/{name_in}'
+    out = f'./{name_out}.csv'
+    #in_dir = f'./dataset/{dataset}'
+    #out = f'./{dataset}.csv'
+
+    image_paths = get_train_paths(os.path.join(in_dir, 'data.csv'))
+
+    main(image_paths, out)
