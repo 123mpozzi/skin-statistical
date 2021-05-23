@@ -1,7 +1,7 @@
 from prepare_dataset import process_schmugge, read_schmugge
 from PIL import Image
 import pandas as pd
-from utils import csv_note_count, csv_skintone_count, csv_skintone_filter, get_test_paths, get_all_paths
+from utils import csv_note_count, csv_skintone_count, csv_skintone_filter, get_test_paths, get_all_paths, load_skintone_split
 from tqdm import tqdm
 import sys, os, time, json
 from shutil import copyfile
@@ -31,14 +31,14 @@ def predict(probability, path_x, path_y, out_dir, measure_time: str = None):
     # the masks and predictions will be saved LOSSLESS as PNG
     out_p = f'{out_dir}/p/{filename}.png'
     out_y = f'{out_dir}/y/{filename}.png'
-    out_x = f'{out_dir}/x/{filename}.{x_ext}'
+    out_x = f'{out_dir}/x/{filename}{x_ext}'
     # os.makedirs(os.path.dirname(out_p), exist_ok=True)
     # os.makedirs(os.path.dirname(out_y), exist_ok=True)
     # os.makedirs(os.path.dirname(out_x), exist_ok=True)
 
     # save p
-    #t_elapsed = create_image(temp, probability, out_p)
-    t_elapsed = create_image_t(temp, probability, out_p)
+    t_elapsed = create_image(temp, probability, out_p)
+    #t_elapsed = create_image_t(temp, probability, out_p)
 
     # save y
     #im_y.save(out_y)
@@ -50,8 +50,8 @@ def predict(probability, path_x, path_y, out_dir, measure_time: str = None):
     copyfile(path_x, out_x)
     copyfile(path_y, out_y)
 
-    temp.close()
-    im.close()
+    #temp.close()
+    #im.close()
 
     # save performance
     if measure_time:
@@ -220,6 +220,49 @@ if __name__ == "__main__":
                 # use whole dataset as testing set
                 image_paths = get_all_paths(os.path.join(ds, 'data.csv'))
                 main(image_paths, model_name, out_dir)
+    # predict all on Schmugge skintones
+    elif db_model == 'skintones':
+        timestr = get_timestamp()
+        modls = ['dark', 'medium', 'light']
+        in_dir = './dataset/Schmugge'
+
+
+        # base preds: based on splits defined by me and only predict on self
+        # timestr/bayes/base/{ecu,hgr,schmugge}/{p/y/x}
+        for in_model in modls: # load each model
+            model_name = in_model + '.csv'
+
+            load_skintone_split(in_model)
+            
+            out_dir = f'./predictions/{timestr}/bayes/base/{in_model}'
+            image_paths = get_test_paths(os.path.join(in_dir, 'data.csv'))
+
+            main(image_paths, model_name, out_dir)
+
+
+        # cross preds: use a dataset whole as the testing set
+        # timestr/bayes/cross/ecu_on_ecu/{p/y/x}
+        for in_model in modls: # load each model
+            model_name = in_model + '.csv'
+
+            for inp in modls:
+                # re-import Schmugge
+                schm = read_schmugge('./dataset/Schmugge/data/.config.SkinImManager', './dataset/Schmugge/data/data')
+                process_schmugge(schm, './dataset/Schmugge/data.csv', ori_out_dir='./dataset/Schmugge/newdata/ori', gt_out_dir='./dataset/Schmugge/newdata/gt')
+
+                # Set to True to filter a dataset CSV by given skintone,
+                # the other entries will be deleted from the CSV file
+                filter_by_skintone_csv = './dataset/Schmugge/data.csv' # dataset to process
+                csv_skintone_filter(filter_by_skintone_csv, inp, mode = 'test')
+                csv_skintone_count(filter_by_skintone_csv, inp)
+                #csv_note_count(filter_by_skintone_csv, filter_mode)
+
+                #in_dir = f'./dataset/{in_model}'
+                out_dir = f'./predictions/{timestr}/bayes/cross/{in_model}_on_{inp}'
+
+                # use whole dataset as testing set
+                image_paths = get_test_paths(os.path.join(in_dir, 'data.csv'))
+                main(image_paths, model_name, out_dir)
     # normal case
     else: 
         # Create output dirs if not exist
@@ -230,15 +273,15 @@ if __name__ == "__main__":
         # special case: predict on Schmugge skintones sub-splits
         if db_pred in ('light', 'medium', 'dark'):
             # re-import Schmugge
-            schm = read_schmugge('dataset/Schmugge/data/.config.SkinImManager', 'dataset/Schmugge/data/data')
-            process_schmugge(schm, 'dataset/Schmugge/data.csv', ori_out_dir='dataset/Schmugge/newdata/ori', gt_out_dir='dataset/Schmugge/newdata/gt')
+            schm = read_schmugge('./dataset/Schmugge/data/.config.SkinImManager', './dataset/Schmugge/data/data')
+            process_schmugge(schm, './dataset/Schmugge/data.csv', ori_out_dir='./dataset/Schmugge/newdata/ori', gt_out_dir='./dataset/Schmugge/newdata/gt')
 
 
             # Set to True to filter a dataset CSV by given skintone,
             # the other entries will be deleted from the CSV file
             filter_by_skintone = True
             filter_by_skintone_type = db_pred # light medium dark nd
-            filter_by_skintone_csv = 'dataset/Schmugge/data.csv' # dataset to process
+            filter_by_skintone_csv = './dataset/Schmugge/data.csv' # dataset to process
             filter_mode = 'test'
 
             if filter_by_skintone:
