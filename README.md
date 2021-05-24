@@ -1,6 +1,6 @@
 
-# Skin-detection
-A skin detection program that detects human skin using **Naive Bayes** algorithm
+# Skin Statistical
+A skin detection method that detects human skin using probability.
 
 # Outcomes
 Input         							|  Output
