@@ -172,71 +172,6 @@ def csv_skintone_count(csv_file: str, skintone: str):
     print(f"Found {j} items of type {skintone}")
     return j
 
-# # leaves only the entries of the corresponding
-# # csv must have 4 cols!
-# # skintone may be: 'dark', 'light', 'medium'
-# def csv_skintone_filter(csv_file: str, skintone: str, mode = 'train'):
-#     # read the images CSV
-#     file = open(csv_file)
-#     file3c = file.read().splitlines()
-#     file.close()
-
-#     # rewrite csv file
-#     with open(csv_file, 'w') as out:
-#         for entry in file3c:
-#             ori_path = entry.split(csv_sep)[0]
-#             gt_path = entry.split(csv_sep)[1]
-
-#             skint = entry.split(csv_sep)[3]
-
-#             if skint != skintone: # should not be filtered
-#                 if mode != 'train':
-#                     if (random.random() < 0.8): # happens 80% of the time
-#                         note = 'tr'
-#                     else: # happens 20% of the time
-#                         note = 'va'
-#                 else:
-#                     note = 'te'
-#                     #note = entry.split(csv_sep)[2]
-                
-#                 #print(f"NOT {ori_path}{csv_sep}{gt_path}{csv_sep}{note}{csv_sep}{skint}\n")
-#                 out.write(f"{ori_path}{csv_sep}{gt_path}{csv_sep}{note}{csv_sep}{skint}\n")
-#             else: # should be in the filter
-#                 if mode == 'train':
-#                     if (random.random() < 0.8): # happens 80% of the time
-#                         note = 'tr'
-#                     else: # happens 20% of the time
-#                         note = 'va'
-#                 else:
-#                     note = 'te'
-#                     #note = entry.split(csv_sep)[2]
-                
-#                 #print(f"{ori_path}{csv_sep}{gt_path}{csv_sep}{note}{csv_sep}{skintone}\n")
-#                 out.write(f"{ori_path}{csv_sep}{gt_path}{csv_sep}{note}{csv_sep}{skintone}\n")
-
-
-# def csv_skintone_count(csv_file: str, skintone: str):
-#     # read the images CSV
-#     file = open(csv_file)
-#     file3c = file.read().splitlines()
-#     file.close()
-
-#     j = 0
-#     # rewrite csv file
-#     with open(csv_file, 'r') as out:
-#         for entry in file3c:
-#             ori_path = entry.split(csv_sep)[0]
-#             gt_path = entry.split(csv_sep)[1]
-#             note = entry.split(csv_sep)[2]
-#             skint = entry.split(csv_sep)[3]
-
-#             if skint == skintone:
-#                 j += 1
-#                 print(f"{ori_path}{csv_sep}{gt_path}{csv_sep}{note}{csv_sep}{skint}")
-    
-#     print(f"Found {j} items of type {skintone}")
-
-
 def csv_note_count(csv_file: str, mode: str):
     # read the images CSV
     file = open(csv_file)
@@ -280,3 +215,32 @@ def load_skintone_split(skintone):
         copyfile('./dataset/Schmugge/dark2305_1309.csv', './dataset/Schmugge/data.csv')
     else:
         print(f'skintone type invalid: {skintone}')
+
+
+# do not use with schmugge (4 columns)
+def get_bench_testset(csv_file, count = 15):
+    # read the images CSV
+    file = open(csv_file)
+    file3c = file.read().splitlines()
+    file.close()
+
+    filenames = []
+    for i in range(count):
+        istr = str(i).zfill(2)
+        
+        filenames.append(f'im000{istr}')
+
+    # rewrite csv file
+    with open(csv_file, 'w') as out:
+        for entry in file3c:
+            ori_path = entry.split(csv_sep)[0]
+            gt_path = entry.split(csv_sep)[1]
+            note = 'tr'
+
+            ori_basename = os.path.basename(ori_path)
+            ori_filename, ori_ext = os.path.splitext(ori_basename)
+
+            if ori_filename in filenames:
+                note = 'te'
+                
+            out.write(f"{ori_path}{csv_sep}{gt_path}{csv_sep}{note}\n")

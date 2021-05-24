@@ -1,30 +1,18 @@
 from prepare_dataset import process_schmugge, read_schmugge
 from PIL import Image
 import pandas as pd
-from utils import csv_note_count, csv_skintone_count, csv_skintone_filter, get_test_paths, get_all_paths, load_skintone_split
+from utils import csv_note_count, csv_skintone_count, csv_skintone_filter, get_test_paths, get_all_paths, load_skintone_split, get_bench_testset
 from tqdm import tqdm
-import sys, os, time, json
+import sys, os, time
 from shutil import copyfile
 
 
 def open_image(src): 
     return Image.open(src,'r')
 
-def test_old(probability, path_p, path_y, out_p, out_y):
-    
-    im = open_image(path_p)
-    temp = im.copy()
-    filename, p_ext = os.path.splitext(os.path.basename(path_p))
-    create_image(temp, probability, os.path.join(out_p, filename + '.png'))
-
-    im_y = open_image(path_y)
-    # rename the mask using the prediction name, but as PNG
-    im_y.save(os.path.join(out_y, filename + '.png'))
-
 # measure_time is the file to open and append performance data
 def predict(probability, path_x, path_y, out_dir, measure_time: str = None):
     im = open_image(path_x)
-    #im_y = open_image(path_y)
     temp = im.copy()
     # use the x filename for all saved images filenames (x, y, p)
     filename, x_ext = os.path.splitext(os.path.basename(path_x))
@@ -32,19 +20,10 @@ def predict(probability, path_x, path_y, out_dir, measure_time: str = None):
     out_p = f'{out_dir}/p/{filename}.png'
     out_y = f'{out_dir}/y/{filename}.png'
     out_x = f'{out_dir}/x/{filename}{x_ext}'
-    # os.makedirs(os.path.dirname(out_p), exist_ok=True)
-    # os.makedirs(os.path.dirname(out_y), exist_ok=True)
-    # os.makedirs(os.path.dirname(out_x), exist_ok=True)
 
     # save p
     t_elapsed = create_image(temp, probability, out_p)
     #t_elapsed = create_image_t(temp, probability, out_p)
-
-    # save y
-    #im_y.save(out_y)
-
-    # save x
-    #im.save(out_x)
 
     # copy x and y
     copyfile(path_x, out_x)
@@ -55,15 +34,8 @@ def predict(probability, path_x, path_y, out_dir, measure_time: str = None):
 
     # save performance
     if measure_time:
-        # append performance data to the file
-        with open(measure_time, 'a') as f:
-            t_data = {}
-            t_data['x'] = out_x
-            t_data['y'] = out_y
-            t_data['p'] = out_p
-            t_data['elapsed'] = t_elapsed
-            # append dict as JSON data
-            f.write(json.dumps(t_data))
+        with open(measure_time, 'a') as myfile:
+            myfile.write(f'{path_x},{t_elapsed}\n')
 
 def create_image(im, probability, out_p): 
     width, height = im.size
@@ -85,6 +57,7 @@ def create_image(im, probability, out_p):
     return t_elapsed
 
 # from https://stackoverflow.com/a/36469395
+# experimental, maybe faster ? NOT TESTED
 def create_image_t(im, probability, out_p): 
     im.load()
 
@@ -113,20 +86,7 @@ def create_image_t(im, probability, out_p):
     im.save(out_p)
     return t_elapsed
 
-def main_old(image_paths, in_model, out_p, out_y):
-
-    print("Reading CSV...")
-    probability = pd.read_csv(in_model) # getting the rows from csv    
-    print('Data collection completed') 
-    
-    #path = 'test/1.jpg'
-    for i in tqdm(image_paths):
-        im_abspath = os.path.abspath(i[0]) 
-        y_abspath = os.path.abspath(i[1])
-
-        test_old(probability, im_abspath, y_abspath, out_p, out_y) # this tests the data
-
-def main(image_paths, in_model, out_dir):
+def main(image_paths, in_model, out_dir, bench_outfile: str = None):
     print("Reading CSV...")
     probability = pd.read_csv(in_model) # getting the rows from csv    
     print('Data collection completed')
@@ -140,7 +100,7 @@ def main(image_paths, in_model, out_dir):
         im_abspath = os.path.abspath(i[0]) 
         y_abspath = os.path.abspath(i[1])
 
-        predict(probability, im_abspath, y_abspath, out_dir) # this tests the data
+        predict(probability, im_abspath, y_abspath, out_dir, measure_time=bench_outfile) # this tests the data
 
 def get_timestamp() -> str:
     return time.strftime("%Y%m%d-%H%M%S")
@@ -160,6 +120,7 @@ if __name__ == "__main__":
     elif n == 3: # cross dataset predictions
         db_model = sys.argv[1] # first argument, argv[0] is the name of the script
         db_pred = sys.argv[2]
+
         in_model = f'./{db_model}.csv'
         in_dir = f'./dataset/{db_pred}'
         out_p = f'./predictions/{db_model}_on_{db_pred}/p'
@@ -170,7 +131,7 @@ if __name__ == "__main__":
         db examples: Schmugge, ECU, HGR''')
     
 
-    # special case: predict using all the default datasets
+    ## ALL: predict using all the default datasets
     if db_model == 'all':
         timestr = get_timestamp()
         modls = ['ecu', 'hgr', 'schmugge']
@@ -193,8 +154,8 @@ if __name__ == "__main__":
             
             in_dir = f'./dataset/{in_model}'
             out_dir = f'./predictions/{timestr}/bayes/base/{inm}'
-            image_paths = get_test_paths(os.path.join(in_dir, 'data.csv'))
 
+            image_paths = get_test_paths(os.path.join(in_dir, 'data.csv'))
             main(image_paths, model_name, out_dir)
 
 
@@ -220,7 +181,9 @@ if __name__ == "__main__":
                 # use whole dataset as testing set
                 image_paths = get_all_paths(os.path.join(ds, 'data.csv'))
                 main(image_paths, model_name, out_dir)
-    # predict all on Schmugge skintones
+    
+
+    ## SKINTONES: predict all on Schmugge skintones
     elif db_model == 'skintones':
         timestr = get_timestamp()
         modls = ['dark', 'medium', 'light']
@@ -263,7 +226,31 @@ if __name__ == "__main__":
                 # use whole dataset as testing set
                 image_paths = get_test_paths(os.path.join(in_dir, 'data.csv'))
                 main(image_paths, model_name, out_dir)
-    # normal case
+    
+
+    ## BENCHMARK: to measure the execution time
+    elif db_model == 'bench':
+        timestr = get_timestamp()
+
+        # use first 15 ECU images as test set
+        in_dir = './dataset/ECU'
+        db_csv = os.path.join(in_dir, 'data.csv')
+        in_model = 'ECU.csv'
+        out_dir = f'./predictions/bench/{timestr}'
+
+        # set only the first 15 ECU images as test
+        get_bench_testset(db_csv, count=15)
+
+        image_paths = get_test_paths(db_csv)
+
+        # do 5 observations
+        # the predictions will be the same
+        # but the performance will be logged 5 times
+        for k in range(5):
+            main(image_paths, in_model, out_dir, f'bench{k}.txt')
+    
+
+    ## DEFAULT: normal case
     else: 
         # Create output dirs if not exist
         os.makedirs(out_p, exist_ok=True)
@@ -293,6 +280,5 @@ if __name__ == "__main__":
 
 
         image_paths = get_test_paths(os.path.join(in_dir, 'data.csv'))
-
         main(image_paths, in_model, out_p, out_y)
 
