@@ -6,4 +6,5 @@ predictions_old
 venv
 dataset
 *.csv
+models/*.csv
 bench*.txt

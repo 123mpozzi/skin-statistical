@@ -43,7 +43,9 @@ If the db-predict is not specified, the metrics are measured on db-model itself
 Already prepared datasets: `ECU, HGR_small, Schmugge`  
 To add more datasets, modify the if/else chain at the end of `prepare_dataset.py` and use the same dataset format as the
 supported ones.  
-The scripts to include some other skin datasets are present and most should work, but they' have not been tested.
+The scripts to include some other skin datasets are present and most should work, but they' have not been tested.  
+  
+There are some pre-trained models included in the `models` folder (to use a model: unzip it from the folder and place it to the root dir of the project).
 
 # Public datasets used
 **ECU**: https://documents.uow.edu.au/~phung/download.html (ask the authors)  
