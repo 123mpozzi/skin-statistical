@@ -2,7 +2,6 @@ import os, sys
 from PIL import Image
 import numpy as np
 import csv
-import pandas as pd
 from utils import get_train_paths
 from tqdm import tqdm
 
@@ -111,15 +110,14 @@ def main(image_paths, out):
     create_csv(probability, out) ## creating CSV from that probabilty and rgb
 
 
-## USAGE: python skin_detection_train.py <name of the dataset (Schmugge, ECU, HGR)>
 if __name__ == "__main__":
     # total arguments
     n = len(sys.argv)
 
     if n != 2:
         exit('''There must be 1 argument!
-        Usage: python skin_detection_train.py <db-name>
-        db examples: Schmugge, ECU, HGR''')
+        Usage: python train.py <db-name>
+        Available DB values:\tSchmugge, ECU, HGR''')
 
     dataset = sys.argv[1]
 

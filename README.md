@@ -1,6 +1,6 @@
 
 # Skin Statistical
-A skin detection method that detects human skin using probability.
+Detecting human skin using probability.
 
 # Outcomes
 Input         							|  Output
@@ -27,25 +27,25 @@ Input         							|  Output
 # How to use
 1. Create the folder `dataset` and unzip into it the included databases in `dataset_importfiles` or add yours  
 1. (optional) Prepare skin datasets:  
-`prepare_dataset.py <db-name>`
+`python prepare_dataset.py <db-name>`
 1. (optional) Modify dataset splits by modifying the `data.csv` file present in the dataset root folder
 1. **Train** a model:  
-`skin_detection_train.py  <db-name>`
+`python train.py  <db-name>`
 1. **Predict** over a dataset with  
-`skin_detection_test.py <db-model> <db-predict>`  
+`python predict.py <db-model> <db-predict>`  
 Example: use Schmugge model to print predictions on ECU test set  
-`skin_detection_test.py Schmugge ECU`
+`python predict.py Schmugge ECU`
 1. (optional) Test metrics:  
-`metrics.py <db-model> [db-predict]`  
+`python metrics.py <db-model> [db-predict]`  
 If the db-predict is not specified, the metrics are measured on db-model itself
 
 
 Already prepared datasets: `ECU, HGR_small, Schmugge`  
 To add more datasets, modify the if/else chain at the end of `prepare_dataset.py` and use the same dataset format as the
 supported ones.  
-The scripts to include some other skin datasets are present and most should work, but they' have not been tested.  
+Scripts to include other common skin datasets are provided and most of them should work, but they have not been tested.  
   
-There are some pre-trained models included in the `models` folder (to use a model: unzip it from the folder and place it to the root dir of the project).
+Some pre-trained models are provided in the `models` folder. To use a model, unzip it from the folder and place it in the root directory of the project.
 
 # Public datasets used
 **ECU**: https://documents.uow.edu.au/~phung/download.html (ask the authors)  
@@ -53,5 +53,7 @@ There are some pre-trained models included in the `models` folder (to use a mode
 **Schmugge**: https://www.researchgate.net/publication/257620282_skin_image_Data_set_with_ground_truth
 
 
-# Credits:
+# Credits
+
+Credits to the original version author: 
 https://github.com/Chinmoy007/Skin-detection
