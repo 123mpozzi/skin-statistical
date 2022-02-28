@@ -1,17 +1,25 @@
-from prepare_dataset import process_schmugge, read_schmugge
 from PIL import Image
 import pandas as pd
-from utils import *
 from tqdm import tqdm
 import sys, os, time
 from shutil import copyfile
+from utils.hash_utils import hash_dir
+from utils.db_utils import get_db_by_name, get_model_filename
+from utils.ECU import ECU
+from utils.Schmugge import Schmugge
+from utils.HGR import HGR
+from utils.dark import dark
+from utils.medium import medium
+from utils.light import light
 
-skintones = ('dark', 'medium', 'light')
+# TODO: clean root folder: leave only README, train,predict,metrics,gitignore,requirements
+# delete prepare_dataset (move in utils/db py files), delete augment(move in utils/schmugge py file)
+# Move CSV models in models/
+
+# TODO: call db.reset() before prediction to reset the original CSV
+# TODO: multiPROCESSING, not threading (IO)
+
 method_name = 'probabilistic'
-
-# Return a proper database dir given a database name
-def db_dir(dbname: str) -> str:
-    return os.path.join('.', 'dataset', dbname)
 
 # Return a proper prediction dir given prediction type, timestamp string, and predictions name/title
 def pred_dir(type: str, timestr: str, name: str) -> str:
@@ -22,7 +30,7 @@ def pred_dir(type: str, timestr: str, name: str) -> str:
     else: # default
         return os.path.join('.', 'predictions', name)
 
-def open_image(src): 
+def open_image(src):
     return Image.open(src,'r')
 
 def pred_out(path_x: str, out_dir: str) -> list:
@@ -101,57 +109,39 @@ def base_preds(timestr: str, models: list):
     # base preds: based on splits defined by me and only predict on self
     # timestr/bayes/base/{ecu,hgr,schmugge}/{p/y/x}
     for in_model in models: # load each model
-        model_name = in_model + '.csv'
-        
-        in_dir = db_dir(in_model)
+        model_name = get_model_filename(in_model)
+
+        image_paths = in_model.get_test_paths()
         out_dir = pred_dir('base', timestr, in_model)
-
-        # check if predicting skintones
-        if in_model in skintones:
-            in_dir = db_dir('Schmugge')
-            load_skintone_split(in_model)   # TODO: what if I first predict on light then on Schmugge?? is the data.csv reset back?? I think not
-
-        image_paths = get_test_paths(os.path.join(in_dir, 'data.csv'))
         make_predictions(image_paths, model_name, out_dir)
 
 
-def cross_preds(timestr: str, models: list, datasets: list):
+def cross_preds(timestr: str, train_databases: list, predict_databases: list = None):
+    if predict_databases is None:
+        predict_databases = train_databases
+
     # cross preds: use a dataset whole as the testing set
     # timestr/bayes/cross/ecu_on_ecu/{p/y/x}
-    for in_model in models: # load each model
-        model_name = in_model + '.csv'
+    for train_db in train_databases: # load each model
+        model_name = get_model_filename(train_db)
 
-        for db in datasets:
-            db_name = os.path.basename(db)#.lower()
-
-            # check if predicting skintones
-            if in_model in skintones:
-                filter_schmugge(db)
-                db_name = db
-                in_dir = db_dir('Schmugge')
-                image_paths = get_test_paths(os.path.join(in_dir, 'data.csv')) # TODO ?? why test instead of all??
-            else:
-                image_paths = get_all_paths(os.path.join(db, 'data.csv'))
-            
-            out_dir = pred_dir('cross', timestr, f'{in_model}_on_{db_name}')
+        for predict_db in predict_databases:            
+            image_paths = predict_db.get_all_paths()
+            out_dir = pred_dir('cross', timestr, f'{train_db.name}_on_{predict_db.name}')
             make_predictions(image_paths, model_name, out_dir)
 
 def filter_schmugge(skintone: str):
     # re-import Schmugge
-    schm = read_schmugge('./dataset/Schmugge/data/.config.SkinImManager', './dataset/Schmugge/data/data')
-    process_schmugge(schm, './dataset/Schmugge/data.csv', ori_out_dir='./dataset/Schmugge/newdata/ori', gt_out_dir='./dataset/Schmugge/newdata/gt')
+    Schmugge().gen_csv(predefined=False)
 
     # Filter a dataset CSV by given skintone, the other entries will be deleted from the CSV file
-    csv_file = os.path.join(db_dir('Schmugge'), 'data.csv') # dataset to process
-    update_mode = 'test'
-    update_schmugge(csv_file, skintone, mode = update_mode)
-    count_skintones(csv_file, skintone)
-    count_notes(csv_file, update_mode)
+    Schmugge().update_notes(skintone, train_mode=False)
+    Schmugge().count_skintones(skintone)
+    Schmugge().count_notes(mode='test')
 
 
 if __name__ == "__main__":
-    # total arguments
-    n = len(sys.argv)
+    n = len(sys.argv) # total arguments
 
     db_model = ''
     db_pred = ''
@@ -171,57 +161,42 @@ if __name__ == "__main__":
     ## ALL: predict using all the default datasets
     if db_model == 'all': # TODO: misleading name
         timestr = get_timestamp()
-        models = ['ECU', 'HGR_small', 'Schmugge']
-        datasets = []
-        for model_name in models:
-            datasets.append(db_dir(model_name))
+        models = (ECU(), HGR(), Schmugge())
 
         base_preds(timestr, models)
-        cross_preds(timestr, models, datasets)
+        cross_preds(timestr, models)
     
 
     ## SKINTONES: predict all on Schmugge skintones
     elif db_model == 'skintones':
         timestr = get_timestamp()
-        models = skintones
+        models = (dark(), medium(), light())
 
         base_preds(timestr, models)
-        cross_preds(timestr, models, models)
+        cross_preds(timestr, models)
     
 
     ## BENCHMARK: measure the execution time
     elif db_model == 'bench':
         timestr = get_timestamp()
 
-        # use first 15 ECU images as test set
-        in_dir = db_dir('ECU')
-        db_csv = os.path.join(in_dir, 'data.csv')
-        in_model = 'ECU.csv'
+        # Use first 15 ECU images as test set        
+        ECU().prepare_benchmark_set(count=15)
+        image_paths = ECU().get_test_paths()
         out_dir = pred_dir('bench', timestr, None)
-
-        # set only the first 15 ECU images as test
-        prepare_benchmark_set(db_csv, count=15)
-        image_paths = get_test_paths(db_csv)
 
         # do 5 observations
         # the predictions will be the same
         # but the performance will be logged 5 times
         observations = 5
         for k in range(observations):
-            make_predictions(image_paths, in_model, out_dir, out_bench=f'bench{k}.txt')
+            make_predictions(image_paths, get_model_filename(ECU()), out_dir, out_bench=f'bench{k}.txt')
     
 
     ## DEFAULT: normal case
-    else: 
-        in_model = f'./{db_model}.csv'
-        in_dir = db_dir(db_pred)
+    else:
+        train_db = get_db_by_name(db_model)
+
+        image_paths = get_db_by_name(db_pred).get_test_paths()
         out_dir = pred_dir(None, None, name = f'{db_model}_on_{db_pred}')
-
-        # special case: predict on Schmugge skintones sub-splits
-        if db_pred in skintones:
-            filter_schmugge(skintone = db_pred)
-            in_dir = db_dir('Schmugge')
-
-        image_paths = get_test_paths(os.path.join(in_dir, 'data.csv'))
-        make_predictions(image_paths, in_model, out_dir)
-
+        make_predictions(image_paths, get_model_filename(train_db), out_dir)
