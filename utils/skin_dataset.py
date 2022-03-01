@@ -52,7 +52,7 @@ class skin_dataset(object): # TODO: reset() method to re-generate data.csv
         
         list_str = '<all>'
         if len(matches) > 0:
-            list_str = ', '.join([str(elem) for elem in matches])
+            list_str = ', '.join([str(elem) for elem in matches]) # TODO: bug: t, e instead of te, 
 
         if len(files) == 0:
             exit(f'No paths found matching: {list_str}')
@@ -82,6 +82,8 @@ class skin_dataset(object): # TODO: reset() method to re-generate data.csv
         else:
             matches = (self.nt_testing)
         return len(self.match_paths(self.csv, matches, 2))
+    
+    # TODO: reset() method which re-process the db
 
 
 # Credit to https://refactoring.guru/design-patterns/singleton/python/example

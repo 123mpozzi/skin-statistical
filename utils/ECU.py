@@ -4,8 +4,8 @@ from utils.skin_dataset import skin_dataset, SingletonMeta
 class ECU(skin_dataset, metaclass=SingletonMeta):
     def __init__(self):
         super().__init__('ECU')
-        #self.gt = ''
-        #self.ori = ''
+        #self.gt = os.path.join(self.dir, 'skin_masks')
+        #self.ori = os.path.join(self.dir, 'origin_images')
     
     # Modify the CSV file to allow benchmarking using the starting images of ECU dataset
     # Benchmark images will be assigned to the testing set
@@ -16,7 +16,7 @@ class ECU(skin_dataset, metaclass=SingletonMeta):
         filenames = []
         for i in range(amount):
             istr = str(i).zfill(2)
-            filenames.append(f'im000{istr}') # ECU filenames format # TODO: not sure, this is from abd-git
+            filenames.append(f'im000{istr}') # ECU filenames format # TODO: not sure, this is from abd-git #TODO: what if amount has 3 cifre? - better zerofill!!!
 
         # rewrite csv file, keep only benchmark images as testing set
         with open(self.csv, 'w') as out:

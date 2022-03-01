@@ -80,7 +80,7 @@ class Schmugge(skin_dataset, metaclass=SingletonMeta): # TODO: extend again with
                     out.write(self.to_csv_row(ori_path, gt_path, note, skintone))
     
     # Load a skintone split by replacing the data.csv file
-    def load_skintone_split(self, skintone):
+    def load_skintone_split(self, skintone): # TODO: remove from Schmugge()? place in dark()? Is it needed? directly use dark.csv in dark(), lgiht.csv in light(), hwile schmugge still uses data.csv
         self.assert_skintone(skintone)
         os.remove(self.csv)
 
@@ -236,3 +236,5 @@ class Schmugge(skin_dataset, metaclass=SingletonMeta): # TODO: extend again with
                         note = self.nt_validation
                 
                 out.write(self.to_csv_row(ori_out, gt_out, note, skintone))
+
+# TODO: place sub-datasets here in the same class? dark(), light(), med() ? from Schmugge import dark, light, Schmugge

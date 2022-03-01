@@ -5,6 +5,10 @@ from random import shuffle
 from utils import csv_sep, get_training_and_testing_sets
 
 
+# TODO: where to place these functions: in a util.py like this or in Schmugge.py ?
+#   if in Schmugge.py -> how to define sub-datasets: hgr1,hgr2,  dark,light  ?
+#                     -> place imports.json data into Schmugge.py files
+
 ## USAGE: python prepare_dataset.py <name of the dataset (Schmugge, ECU, HGR)>
 
 # Get the variable part of a filename into a dataset
