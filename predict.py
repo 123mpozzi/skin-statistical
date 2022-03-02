@@ -1,3 +1,4 @@
+import traceback
 from PIL import Image
 import pandas as pd
 from tqdm import tqdm
@@ -5,35 +6,29 @@ import os, time
 from shutil import copyfile
 from utils.hash_utils import hash_dir
 from utils.db_utils import *
-from utils.ECU import ECU
-from utils.Schmugge import Schmugge
-from utils.HGR import HGR
-from utils.dark import dark
-from utils.medium import medium
-from utils.light import light
+from utils.ECU import ECU, ECU_bench
 import click
+import traceback
 
 # TODO: clean root folder: leave only README, train,predict,metrics,gitignore,requirements
-# delete prepare_dataset (move in utils/db py files), delete augment(move in utils/schmugge py file)
-# Move CSV models in models/
-
-# TODO: call db.reset() before prediction to reset the original CSV
-
-# TODO: final checks: -check dir hashes -check metrics result
 
 method_name = 'probabilistic'
+
+def get_timestamp() -> str:
+    return time.strftime("%Y%m%d-%H%M%S")
 
 # Return a proper prediction dir given prediction type, timestamp string, and predictions name/title
 def pred_dir(type: str, timestr: str, name: str) -> str:
     if type in ('base', 'cross'):
         return os.path.join('.', 'predictions', timestr, method_name, type, name)
     elif type == 'bench':
-        return os.path.join('.', 'predictions', type, timestr)
+        return os.path.join('.', 'predictions', type, timestr, name)
     else: # default
         return os.path.join('.', 'predictions', name)
 
 def open_image(src):
-    return Image.open(src,'r')
+    # Convert to RGB as some image may be read as RGBA: https://stackoverflow.com/a/54713582
+    return Image.open(src,'r').convert('RGB')
 
 def pred_out(path_x: str, out_dir: str) -> list:
     # use the x filename for all saved images filenames (x, y, p)
@@ -54,12 +49,14 @@ def predict(probability, path_x, path_y, out_dir, out_bench: str = None):
 
     # save p
     t_elapsed = create_image(temp, probability, out_p)
+
     # close file and free memory
     temp.close()
 
     # copy x and y
     copyfile(path_x, out_x)
-    copyfile(path_y, out_y)
+    if path_y is not None: # may also predict images without a groundtruth
+        copyfile(path_y, out_y)
 
     # save inference performance to file
     if out_bench:
@@ -73,6 +70,7 @@ def create_image(im: Image, probability, out_p) -> float:
     t_start = time.time()
     # ALGO
     newimdata = []
+    
     for r,g,b in im.getdata():
         row_num = (r*256*256) + (g*256) + b #calculating the serial row number 
         if(probability['Probability'][row_num] <0.555555):
@@ -86,7 +84,10 @@ def create_image(im: Image, probability, out_p) -> float:
     im.save(out_p)
     return t_elapsed
 
+# TODO: return accuracy/metrics together with hash?
 def make_predictions(image_paths, in_model, out_dir, out_bench: str = None):
+    assert os.path.isfile(in_model), '(X) Model file not existing: ' + in_model
+
     print("Reading CSV...")
     probability = pd.read_csv(in_model) # getting the rows from csv    
     print('Data collection completed')
@@ -98,27 +99,28 @@ def make_predictions(image_paths, in_model, out_dir, out_bench: str = None):
     for i in tqdm(image_paths):
         im_abspath = os.path.abspath(i[0]) 
         y_abspath = os.path.abspath(i[1])
-        predict(probability, im_abspath, y_abspath, out_dir, out_bench) # this tests the data
+
+        # Try predicting
+        try:
+            predict(probability, im_abspath, y_abspath, out_dir, out_bench) # this tests the data
+        # File not found, prediction algo fail, ..
+        except Exception:
+            print(f'Failed to infer on image: {im_abspath}')
+            print(traceback.format_exc())
 
     predictions_hash = print(hash_dir(out_dir))
     return predictions_hash
 
-def get_timestamp() -> str:
-    return time.strftime("%Y%m%d-%H%M%S")
-
 # Base predictions
 # For each dataset: the model is trained on the training set
-# and then predictions are performed on the dataset's test set
+# and then predictions are performed on self test set
 def base_preds(timestr: str, models: list):
-    # base preds: based on splits defined by me and only predict on self
-    # timestr/bayes/base/{ecu,hgr,schmugge}/{p/y/x}
     for in_model in models: # load each model
         model_name = get_model_filename(in_model)
 
         image_paths = in_model.get_test_paths() # predict on testing set
-        out_dir = pred_dir('base', timestr, in_model)
+        out_dir = pred_dir('base', timestr, in_model.name)
         make_predictions(image_paths, model_name, out_dir)
-
 
 # Cross predictions
 # For each dataset: the model is trained on the training set
@@ -133,27 +135,39 @@ def cross_preds(timestr: str, train_databases: list, predict_databases: list = N
         for predict_db in predict_databases:
             if train_db == predict_db: # do not predict on self
                 continue
-
+            
             image_paths = predict_db.get_all_paths() # predict the whole dataset
             out_dir = pred_dir('cross', timestr, f'{train_db.name}_on_{predict_db.name}')
             make_predictions(image_paths, model_name, out_dir)
 
-def filter_schmugge(skintone: str):
-    # re-import Schmugge
-    Schmugge().gen_csv(predefined=False)
 
-    # Filter a dataset CSV by given skintone, the other entries will be deleted from the CSV file
-    Schmugge().update_notes(skintone, train_mode=False)
-    Schmugge().count_skintones(skintone)
-    Schmugge().count_notes(mode='test')
-
+# TODO: make a cli.py file, the only runnable one?? (then route and call subcommands eg. predict.cli())
+#   4 subcommands: predict|multipredict|managedb(reset)|metric(need predictions in folder)
+#   explain subcommands (would the program be easier to use?)
+# TODO: validation() --
 
 # Main command which groups the subcommands: single, batch, bench
 @click.group()
 def cli():
     pass
 
+#TODO move away
 # BATCH: N-on-M datasets predictions
+@cli.command()
+@click.option('--db', '-d', type=click.Choice(skin_databases_names(), case_sensitive=False), required=True)
+@click.option('--predefined/--no-predefined', '-p', 'predefined', default=False,
+              help = 'Whether to generate a new data csv or import thesis configuration')
+def reset(db, predefined):
+    if True:
+        trace = get_db_by_name(db).reset(predefined=predefined)
+        if trace: # if there are been errors of some kind
+            print(trace)
+    else:
+        for db in skin_databases_names():
+            get_db_by_name(db).reset()
+
+# BATCH: N-on-M datasets predictions
+# Note: will use only thesis datasets!
 @cli.command()
 @click.option('--type', '-t', type=click.Choice(['base', 'cross', 'all']), required=True)
 @click.option('--skintones/--no-skintones', 'skintones', default=False,
@@ -161,9 +175,9 @@ def cli():
 def batch(type, skintones): # TODO: test but first fix dark()
     timestr = get_timestamp()
 
-    models = skin_databases_names()
-    #if skintones == True:
-    #    models = skin_databases_skintones # TODO: fix dark.py
+    models = skin_databases_normal
+    if skintones == True:
+        models = skin_databases_skintones
 
     if type == 'base':
         base_preds(timestr, models)
@@ -182,25 +196,26 @@ def batch(type, skintones): # TODO: test but first fix dark()
               help='Benchmark set size, in images (-1 is whole db)')
 @click.option('--observations', '-o', type=int, default = 5, show_default=True,
               help='Observations to register for the benchmark set')
-def bench(size, observations): # TODO: test
+def bench(size, observations):
     timestr = get_timestamp()
 
     # Use first 15 ECU images as test set        
-    ECU().prepare_benchmark_set(count=size)
-    image_paths = ECU().get_test_paths()
-    out_dir = pred_dir('bench', timestr, None)
+    ECU_bench().reset(amount=size)
+    image_paths = ECU_bench().get_test_paths()
+    out_dir = pred_dir('bench', timestr, 'observation{}')
 
     # Do multiple observations
     # The predictions will be the same but performance will be logged 5 times
     for k in range(observations):
-        make_predictions(image_paths, get_model_filename(ECU()), out_dir, out_bench=f'bench{k}.txt')
+        make_predictions(image_paths, get_model_filename(ECU()),
+            out_dir.format(k), out_bench=os.path.join(out_dir.format(k), '..', f'bench{k}.txt'))
 
 # SINGLE: 1-on-1 datasets prediction. Can be on self too
 @cli.command()
 @click.option('--model', '-m',
-              type=click.Choice(skin_databases_names(), case_sensitive=True), required=True)
+              type=click.Choice(skin_databases_names(), case_sensitive=False), required=True)
 @click.option('--predict', '-p', 'predict_',
-              type=click.Choice(skin_databases_names(), case_sensitive=True))
+              type=click.Choice(skin_databases_names(), case_sensitive=False))
 @click.option('--from', '-f', 'from_', type=int, default = 0, help = 'Slice start')
 @click.option('--to', '-t', type=int, default = -1, help='Slice end (index excluded)')
 @click.option('--set', '-s', 'set_', type=click.Choice(['test', 'all']), help='Force prediction set')
@@ -231,62 +246,8 @@ def single(model, predict_, from_, to, set_):
     out_dir = pred_dir(None, None, name = f'{model}_on_{predict_}')
     make_predictions(image_paths[from_:to], model_name, out_dir)
 
-    # TODO: bench
-    # TODO: also add batch modes (like predict_multiprocess.py?) - but here they are all singleprocessing
-    # split main command into more commands
-    # modes: single|batch|bench
     # !! TODO: change the single_cmd values in pred_multiprocess.py
-
-    if True:
-        return
-
-    ## ALL: predict using all the default datasets
-    if db_model == 'all': # TODO: misleading name
-        timestr = get_timestamp()
-        models = (ECU(), HGR(), Schmugge())
-
-        base_preds(timestr, models)
-        cross_preds(timestr, models)
-    
-
-    ## SKINTONES: predict all on Schmugge skintones
-    elif db_model == 'skintones':
-        timestr = get_timestamp()
-        models = (dark(), medium(), light())
-
-        base_preds(timestr, models)
-        cross_preds(timestr, models)
-    
-
-    ## BENCHMARK: measure the execution time
-    elif db_model == 'bench':
-        timestr = get_timestamp()
-
-        # Use first 15 ECU images as test set        
-        ECU().prepare_benchmark_set(count=15)
-        image_paths = ECU().get_test_paths()
-        out_dir = pred_dir('bench', timestr, None)
-
-        # do 5 observations
-        # the predictions will be the same
-        # but the performance will be logged 5 times
-        observations = 5
-        for k in range(observations):
-            make_predictions(image_paths, get_model_filename(ECU()), out_dir, out_bench=f'bench{k}.txt')
-    
-
-    ## DEFAULT: normal case
-    else:
-        train_db = get_db_by_name(db_model)
-
-        image_paths = get_db_by_name(db_pred).get_test_paths() # TODO: all paths if cross?
-        out_dir = pred_dir(None, None, name = f'{db_model}_on_{db_pred}')
-        make_predictions(image_paths, get_model_filename(train_db), out_dir)
 
 
 if __name__ == "__main__":
-    #print(hash_dir('./predictions/ECU_on_Schmugge'))
-    #print(hash_dir('./predictions/ECU_on_Schmugge_single'))
-    #print(hash_dir('./predictions/ECU_on_Schmugge_new'))
-
     cli()

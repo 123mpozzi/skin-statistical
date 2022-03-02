@@ -1,7 +1,7 @@
 import click
 from utils.db_utils import *
 import subprocess
-import psutil # TODO: requirements.txt
+import psutil
 
 # Parallelize the predictions by calling predict.py multiple times
 
@@ -148,8 +148,8 @@ def single(model, predict_, set_, workers, debug):
 @click.option('--debug/--no-debug', '-d', 'debug', default=False, help = 'Print more info')
 def batch(type, skintones, workers, debug):
     models = skin_databases_names()
-    #if skintones == True:
-    #    models = skin_databases_skintones # TODO: fix dark.py
+    if skintones == True:
+        models = skin_databases_skintones # TODO: test skintones
 
     workers = determine_workers(workers)
 

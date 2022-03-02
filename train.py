@@ -6,6 +6,11 @@ from utils import get_train_paths
 from tqdm import tqdm
 
 
+# TODO: save as sparse matrix? https://stackoverflow.com/a/8980156 Or in Future Improvements?
+
+# TODO: fix, refactor
+
+
 ##src- path of image file
 def open_image(src): 
     return Image.open(src,'r')
@@ -131,7 +136,7 @@ if __name__ == "__main__":
         name_out = dataset
 
     in_dir = f'./dataset/{name_in}'
-    out = f'./{name_out}.csv'
+    out = f'./models/{name_out}.csv'
     #in_dir = f'./dataset/{dataset}'
     #out = f'./{dataset}.csv'
 
