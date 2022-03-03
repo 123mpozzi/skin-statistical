@@ -1,6 +1,5 @@
 import click
-from utils.db_utils import skin_databases_names, get_db_by_name
-from predict import pred_dir
+from metrics import *
 
 # TODO: validation() --
 
@@ -10,12 +9,16 @@ def measure():
     pass
 
 @measure.command(short_help='Evaluate skin detector performance')
-@click.option('--model', '-m',
-              type=click.Choice(skin_databases_names(), case_sensitive=False), required=True)
-@click.option('--predict', '-p', 'predict_',
-              type=click.Choice(skin_databases_names(), case_sensitive=False))
-def eval(model, predict_):
-    pred_type = 'base' if model == predict_ else 'cross'
-    pred_dir(type=pred_type)
-    pass
+@click.option('--path', '-p',
+              type=click.Path(exists=True), required=True,
+              help = 'Path to the folder containing the predictions dir (eg. ECU_on_Schmugge)')
+def eval(path):
+    # Define metric functions used to evaluate
+    metrics = [f1_m, f2, iou, dprs_m, mcc, recall, precision, specificity]
 
+    # Get folders containing grountruth and prediction IMAGES
+    y_path = os.path.join(path, 'y') # Path eg. 'predictions/HGR_small_on_ECU/y'
+    p_path = os.path.join(path, 'p') # Path eg. 'predictions/HGR_small_on_ECU/p'
+
+    rpd = pd_metrics(y_path, p_path, metrics)
+    print_pd_mean(rpd, metrics, desc=path)
