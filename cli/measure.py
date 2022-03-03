@@ -1,5 +1,6 @@
 import click
 from metrics import *
+from utils.hash_utils import hash_dir
 
 # TODO: validation() --
 
@@ -21,4 +22,4 @@ def eval(path):
     p_path = os.path.join(path, 'p') # Path eg. 'predictions/HGR_small_on_ECU/p'
 
     rpd = pd_metrics(y_path, p_path, metrics)
-    print_pd_mean(rpd, metrics, desc=path)
+    print_pd_mean(rpd, metrics, desc=path + ' with hash=' + hash_dir(path))

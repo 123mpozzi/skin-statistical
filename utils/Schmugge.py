@@ -41,8 +41,8 @@ class Schmugge(skin_dataset, metaclass=SingletonMeta):
         self.sk_dark = 'dark'
         self.skintones = (self.sk_dark, self.sk_medium, self.sk_light)
     
-    # from schmugge custom config (.config.SkinImManager) to a list of dict structure
-    def read_data_manager(self) -> list: # also prepare the csv
+    def read_data_manager(self) -> list:
+        '''From schmugge custom config (.config.SkinImManager) to a list of dict structure'''
         data = []
         
         with open(self.data_manager) as f:
@@ -90,9 +90,6 @@ class Schmugge(skin_dataset, metaclass=SingletonMeta):
         info(f'Schmugge custom config read correctly, found {len(data)} images')
         return data
     
-    # Reimport the dataset
-    # Generate data.csv by reprocessing the dataset content
-    # Return stack trace if there are errors, else empty
     def reset(self, predefined: bool = True) -> str:
         # Catch eventual errors
         stacktrace = ''
@@ -196,6 +193,12 @@ class Schmugge(skin_dataset, metaclass=SingletonMeta):
         
 
 class dark(Schmugge, metaclass=SingletonMeta):
+    '''
+    Subdataset of Schmugge
+
+    It is composed of images labeled as 'dark' in the skintone field
+    inside the dataset's file manager
+    '''
     def __init__(self):
         super().__init__()
         self.name = self.sk_dark
@@ -216,8 +219,11 @@ class dark(Schmugge, metaclass=SingletonMeta):
             self.augment()
         return trace
     
-    # Apply Data Augmentation on all the TRAINING split defined by CSV FILE (the file will be updated)
     def augment(self):
+        '''
+        Apply Data Augmentation on all the TRAINING split defined
+        by CSV FILE (the file will be updated)
+        '''
         # Apply three transformations: hflip, rotate, shiftscalerotate
         for i in range(3):
             # Load the csv file to update
@@ -303,6 +309,12 @@ class dark(Schmugge, metaclass=SingletonMeta):
                 progress_bar.close()
 
 class light(Schmugge, metaclass=SingletonMeta):
+    '''
+    Subdataset of Schmugge
+
+    It is composed of images labeled as 'light' in the skintone field
+    inside the dataset's file manager
+    '''
     def __init__(self):
         super().__init__()
         self.name = self.sk_light
@@ -316,6 +328,12 @@ class light(Schmugge, metaclass=SingletonMeta):
         return trace
 
 class medium(Schmugge, metaclass=SingletonMeta):
+    '''
+    Subdataset of Schmugge
+
+    It is composed of images labeled as 'medium' in the skintone field
+    inside the dataset's file manager
+    '''
     def __init__(self):
         super().__init__()
         self.name = self.sk_medium
@@ -333,11 +351,12 @@ def is_similar(image1, image2):
     return image1.shape == image2.shape and not(np.bitwise_xor(image1,image2).any())
 
 def count_skintones(db: skin_dataset, skintone: str) -> int:
+    '''Count the rows of a given skintone inside a dataset's CSV file'''
     assert skintone in Schmugge().skintones, critical(f'Invalid skintone: {skintone}')
     return len(db.match_paths((skintone), 3, csv_file=Schmugge().import_csv))
 
-# Filter the Schmugge CSV file to leave only lines with given skintone
 def filter_csv(db: Schmugge, skintone):
+    '''Filter the Schmugge CSV file to leave only lines with given skintone'''
     file_content = db.read_csv()
 
     with open(db.csv, 'w') as out:

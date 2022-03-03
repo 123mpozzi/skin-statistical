@@ -20,6 +20,7 @@ class ECU(skin_dataset, metaclass=SingletonMeta):
         # TODO: re-generate split from Skinny ipynb and set self.import_csv = ..
 
 class ECU_bench(skin_dataset, metaclass=SingletonMeta):
+    '''ECU dataset being setup for inference time evaluation'''
     def __init__(self):
         super().__init__(ECU().name)
         self.name = 'ECU_bench'

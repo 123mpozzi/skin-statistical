@@ -8,13 +8,15 @@ from utils.ECU import ECU, ECU_bench
 def cli_predict():
     pass
 
-# BATCH: N-on-M datasets predictions
-# Note: will use only thesis datasets!
 @cli_predict.command(short_help='N-on-M datasets predictions')
 @click.option('--type', '-t', type=click.Choice(['base', 'cross', 'all']), required=True)
 @click.option('--skintones/--no-skintones', 'skintones', default=False,
               help = 'Whether to predict on skintone sub-datasets')
 def batch(type, skintones):
+    '''
+    BATCH: N-on-M datasets predictions
+    Note: will use only datasets featured in the thesis
+    '''
     timestr = get_timestamp()
 
     models = skin_databases_normal
@@ -32,13 +34,13 @@ def batch(type, skintones):
         cross_preds(timestr, models)
         pass
 
-# BENCHMARK: measure inference time
 @cli_predict.command(short_help='Measure inference time')
 @click.option('--size', '-s', type=int, default = 15, show_default=True,
               help='Benchmark set size, in images (-1 is whole db)')
 @click.option('--observations', '-o', type=int, default = 5, show_default=True,
               help='Observations to register for the benchmark set')
 def bench(size, observations):
+    '''BENCHMARK: measure inference time'''
     timestr = get_timestamp()
 
     # Use first 15 ECU images as test set        
@@ -52,7 +54,6 @@ def bench(size, observations):
         make_predictions(image_paths, get_model_filename(ECU()),
             out_dir.format(k), out_bench=os.path.join(out_dir.format(k), '..', f'bench{k}.txt'))
 
-# SINGLE: 1-on-1 datasets prediction. Can be on self too
 @cli_predict.command(short_help='1-on-1 datasets prediction')
 @click.option('--model', '-m',
               type=click.Choice(skin_databases_names(), case_sensitive=False), required=True)
@@ -61,6 +62,7 @@ def bench(size, observations):
 @click.option('--from', '-f', 'from_', type=int, default = 0, help = 'Slice start')
 @click.option('--to', '-t', type=int, default = -1, help='Slice end (index excluded)')
 def single(model, predict_, from_, to):
+    '''SINGLE: 1-on-1 datasets prediction. Can be on self too'''
     # prediction on self
     if predict_ is None:
         predict_ = model

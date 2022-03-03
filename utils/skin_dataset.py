@@ -9,8 +9,9 @@ from tqdm import tqdm
 from shutil import copyfile
 from logging import critical, info, error, warning, debug
 
-# Abstraction of a skin dataset
+
 class skin_dataset(object):
+    '''Abstraction of a skin dataset'''
     def __init__(self, name):
         self.name = name
         # CSV separator used into data.csv file
@@ -41,6 +42,7 @@ class skin_dataset(object):
         self.import_csv = None
     
     def read_csv(self, csv_file = None) -> list:
+        '''Return the multi-column content of the dataset CSV file'''
         if csv_file is None:
             csv_file = self.csv
         
@@ -58,9 +60,11 @@ class skin_dataset(object):
         return file_content
     
     def split_csv_fields(self, row: str) -> list:
+        '''Split the fields of a row taken from the dataset CSV file'''
         return row.split(self.csv_sep)
     
     def to_csv_row(self, *args) -> str:
+        '''Prepare data to be insterted as a row into the dataset CSV file'''
         row = args[0]
         for item in args[1:]:
             row += self.csv_sep
@@ -68,10 +72,13 @@ class skin_dataset(object):
         row += '\n'
         return row
 
-    # Return a list of paths in the format: (ori_image_filename.ext, gt_image_filename.ext)
-    # matching the given strings.
-    # Paths are read from a 3-column CSV file.
     def match_paths(self, matches: list, match_col: int, csv_file = None) -> list:
+        '''
+        Return a list of paths formatted as a tuple:
+        (ori_image_filename.ext, gt_image_filename.ext) matching the given strings.
+
+        Paths are read from a 3-column CSV file.
+        '''
         files = []
 
         if csv_file is None:
@@ -106,27 +113,20 @@ class skin_dataset(object):
         
         return files
 
-    # Filter CSV dataset file to get only the TRAINING+VALIDATION split lines
     def get_train_paths(self) -> list:
+        '''Filter CSV dataset file to get only the TRAINING+VALIDATION split lines'''
         return self.match_paths((self.nt_training, self.nt_validation), 2) # TODO: test
 
-    # Filter CSV dataset file to get only the VALIDATION split lines
     def get_val_paths(self) -> list:
+        '''Filter CSV dataset file to get only the VALIDATION split lines'''
         return self.match_paths((self.nt_validation), 2)
 
-    # Filter CSV dataset file to get only the TESTING split lines
     def get_test_paths(self) -> list:
+        '''Filter CSV dataset file to get only the TESTING split lines'''
         return self.match_paths((self.nt_testing), 2)
 
     def get_all_paths(self) -> list:
         return self.match_paths((), 2)
-
-    def count_notes(self, mode: str) -> int:
-        if mode == 'train':
-            matches = (self.nt_training, self.nt_validation)
-        else:
-            matches = (self.nt_testing)
-        return len(self.match_paths(self.csv, matches, 2))
 
     def get_training_and_testing_sets(self, file_list: list, split: float = 0.7):
         debug(file_list)
@@ -136,8 +136,8 @@ class skin_dataset(object):
         testing = file_list[split_index:]
         return training, testing
 
-    # Check if self.csv file exists and if not try to import it from self.import_csv
     def import_configuration(self, force: bool = False):
+        '''Check if `self.csv` file exists: if not, try to import it from `self.import_csv`'''
         if self.import_csv is None:
             return
 
@@ -152,11 +152,15 @@ class skin_dataset(object):
                 pass
             copyfile(self.import_csv, self.csv)
 
-    # Reimport the dataset
-    # Generate data.csv by reprocessing the dataset content
-    # Return stack trace if there are errors, else empty
     # Reset should be the only function that can modify data.csv!
     def reset(self, append: bool = False, predefined: bool = True) -> str:
+        '''
+        Reimport the dataset
+
+        Generate `data.csv` by reprocessing the dataset content
+
+        Return stack trace if there are errors, else empty
+        '''
         # Required variables
         msg_none = 'Cannot re-import dataset named "{}": {} is None'
         assert self.gt is not None, msg_none.format(self.name, 'gt')
@@ -197,8 +201,8 @@ class skin_dataset(object):
         finally:
             return stacktrace
     
-    # Randomize training, validation, and testing splits inside CSV file
     def randomize(self):
+        '''Randomize training, validation, and testing splits inside CSV file'''
         file_content = self.read_csv()
         shuffle(file_content) # randomize
 
@@ -242,8 +246,8 @@ class SingletonMeta(type):
 def is_image(path: str) -> bool:
     return os.path.isfile(path) and imghdr.what(path) != None
 
-# Get the variable part of a given dataset filename
 def get_variable_filename(filename: str, format: str) -> str:
+    '''Get the variable part of a given dataset filename'''
     if format is None:
         return filename
 
@@ -256,9 +260,8 @@ def get_variable_filename(filename: str, format: str) -> str:
         #print('Cannot match {} with pattern {}'.format(filename, format))
         return None
 
-
-# Creates CSV file containing dataset metadata (such as paths of images)
 def analyze_dataset(db: skin_dataset, append: bool = False):
+    '''Creates CSV file containing dataset metadata (such as paths of images)'''
     # Use gt/ori if not processed, else new_gt/new_ori
     gt_dir = db.gt
     ori_dir = db.ori

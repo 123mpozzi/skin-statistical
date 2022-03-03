@@ -10,8 +10,11 @@ cmd_root = 'python main.py single '
 # TODO: try work=-2
 # TODO: multiprocess: do they touch the dat.csv? if so change it in the py
 
-# Determine the number of workers automatically based on the system resources
 def determine_workers(workers: int) -> int:
+    '''
+    Determine the number of workers automatically based on
+    the system resources
+    '''
     # on auto, # workers = # physical cpu cores
     if workers == -1:
         workers = psutil.cpu_count(logical=False)
@@ -19,11 +22,14 @@ def determine_workers(workers: int) -> int:
         workers = psutil.cpu_count()
     return workers
 
-# Try to assign a proper number of workers per each dataset
-#   eg. Workload = 300.
-#     If db1 has 200  images  -> 1 worker
-#     If db2 has 1000 images  -> 4 workers
 def determine_workers_per_db(db_sizes: dict, workload: int, workers: int, debug: bool) -> dict:
+    '''
+    Try to assign a proper number of workers per each dataset
+
+    eg: Workload = 300.
+        : If db1 has 200  images  -> 1 worker
+        : If db2 has 1000 images  -> 4 workers
+    '''
     remaining_workers = workers
     
     while remaining_workers > 0:
@@ -60,9 +66,12 @@ def determine_workers_per_db(db_sizes: dict, workload: int, workers: int, debug:
                 break
     return db_sizes
 
-# Calculate the workload by measuring the size of each db
-# Return also a dict containing each db with their size
 def calculate_workload(models: list, workers: int, use_only_test_set: bool = False) -> list:
+    '''
+    Calculate the workload by measuring the size of each db
+
+    Return also a dict containing each db with their size
+    '''
     # Get total db size
     db_sizes = {}
     total_db_size = 0

@@ -15,9 +15,11 @@ method_name = 'probabilistic'
 def get_timestamp() -> str:
     return time.strftime("%Y%m%d-%H%M%S")
 
-# Return a proper directory to store predictions given
-# prediction type, timestamp string, and predictions name/title
 def pred_dir(type: str, timestr: str, name: str) -> str:
+    '''
+    Return a proper directory to store predictions given
+    prediction type, timestamp string, and predictions name/title
+    '''
     if type in ('base', 'cross'):
         return os.path.join('.', 'predictions', timestr, method_name, type, name)
     elif type == 'bench':
@@ -38,7 +40,7 @@ def pred_out(path_x: str, out_dir: str) -> list:
     out_x = os.path.join(out_dir, 'x', filename + x_ext)
     return (out_p, out_y, out_x)
 
-# measure_time is the file to open and append performance data
+# out_bench is the file in which append inference performance data
 def predict(probability, path_x, path_y, out_dir, out_bench: str = None):
     im = open_image(path_x)
     temp = im.copy()
@@ -46,24 +48,29 @@ def predict(probability, path_x, path_y, out_dir, out_bench: str = None):
 
     out_p, out_y, out_x = pred_out(path_x, out_dir)
 
-    # save p
+    # Save p
     t_elapsed = create_image(temp, probability, out_p)
 
-    # close file and free memory
+    # Close file and free memory
     temp.close()
 
-    # copy x and y
+    # Copy x and y
     copyfile(path_x, out_x)
-    if path_y is not None: # may also predict images without a groundtruth
-        copyfile(path_y, out_y)
+    #if path_y is not None: # may also predict images without a groundtruth # TODO: future work
+    copyfile(path_y, out_y)
 
-    # save inference performance to file
+    # Save inference performance to file
     if out_bench:
         with open(out_bench, 'a') as out:
             out.write(f'{path_x},{t_elapsed}\n')
 
-# Credit to https://stackoverflow.com/a/36469395
-def create_image(im: Image, probability, out_p) -> float: 
+# Credit to https://stackoverflow.com/a/36469395 for image management with Pillow
+def create_image(im: Image, probability, out_p) -> float:
+    '''
+    Infer on an image and save the prediction
+
+    Return inference time
+    '''
     im.load()
 
     t_start = time.time()
@@ -71,7 +78,7 @@ def create_image(im: Image, probability, out_p) -> float:
     newimdata = []
     
     for r,g,b in im.getdata():
-        row_num = (r*256*256) + (g*256) + b #calculating the serial row number 
+        row_num = (r*256*256) + (g*256) + b # calculating the serial row number 
         if(probability['Probability'][row_num] <0.555555):
             newimdata.append((0,0,0))
         else:
@@ -83,7 +90,6 @@ def create_image(im: Image, probability, out_p) -> float:
     im.save(out_p)
     return t_elapsed
 
-# TODO: return accuracy/metrics together with hash?
 def make_predictions(image_paths, in_model, out_dir, out_bench: str = None):
     assert os.path.isfile(in_model), critical('Model file not existing: ' + in_model)
 
@@ -110,10 +116,12 @@ def make_predictions(image_paths, in_model, out_dir, out_bench: str = None):
     predictions_hash = print(hash_dir(out_dir))
     return predictions_hash
 
-# Base predictions
-# For each dataset: the model is trained on the training set
-# and then predictions are performed on self test set
 def base_preds(timestr: str, models: list):
+    '''
+    Base predictions
+    For each dataset: the model is trained on the training set
+    and then predictions are performed on self test set
+    '''
     # Load each model
     for in_model in models:
         model_name = get_model_filename(in_model)
@@ -123,10 +131,12 @@ def base_preds(timestr: str, models: list):
         out_dir = pred_dir('base', timestr, in_model.name)
         make_predictions(image_paths, model_name, out_dir)
 
-# Cross predictions
-# For each dataset: the model is trained on the training set
-# and then predictions are performed on all the images of every other datasets
 def cross_preds(timestr: str, train_databases: list, predict_databases: list = None):
+    '''
+    Cross predictions
+    For each dataset: the model is trained on the training set
+    and then predictions are performed on all the images of every other datasets
+    '''
     if predict_databases is None:
         predict_databases = train_databases
 
@@ -144,16 +154,3 @@ def cross_preds(timestr: str, train_databases: list, predict_databases: list = N
             image_paths = predict_db.get_all_paths() # predict the whole dataset
             out_dir = pred_dir('cross', timestr, f'{train_db.name}_on_{predict_db.name}')
             make_predictions(image_paths, model_name, out_dir)
-
-if __name__ == "__main__":
-    with open('hashes.csv', 'w') as out:
-        path = './predictions/bayes_st/base'
-        for elem in os.listdir(path):
-            elem = os.path.join(path, elem)
-            if os.path.isdir(elem):
-                out.write(hash_dir(elem) + ',' + elem + '\n')
-        path = './predictions/bayes_st/cross'
-        for elem in os.listdir(path):
-            elem = os.path.join(path, elem)
-            if os.path.isdir(elem):
-                out.write(hash_dir(elem) + ',' + elem + '\n')

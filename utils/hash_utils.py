@@ -15,9 +15,13 @@ def hash_update_from_dir(directory, hash):
             hash = hash_update_from_dir(path, hash)
     return hash
 
-# Return a hash digest representing the directory
-# Hash changes if filenames, filecontent, or number of files changes
-# It is recursive
 def hash_dir(directory: str) -> str:
+    '''
+    Return a hash digest representing the directory
+
+    Hash changes if filenames, filecontent, or number of files changes
+    
+    It is recursive
+    '''
     hash = xxhash.xxh3_64()
     return hash_update_from_dir(directory, hash).hexdigest()

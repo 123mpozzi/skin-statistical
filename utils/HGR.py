@@ -41,6 +41,10 @@ class HGR(skin_dataset, metaclass=SingletonMeta):
         return trace
     
 class HGR1(skin_dataset, metaclass=SingletonMeta):
+    '''
+    HGR1 is a set of 899 pictures of various sizes and taken
+    in uncontrolled light and background environments
+    '''
     def __init__(self):
         super().__init__(HGR().name)
         self.name = 'HGR1'
@@ -51,6 +55,10 @@ class HGR1(skin_dataset, metaclass=SingletonMeta):
         self.import_csv = os.path.join(self.dir, 'HGR_data.csv')
 
 class HGR2A(skin_dataset, metaclass=SingletonMeta):
+    '''
+    HGR2A contains 85 images of the same dimension taken in uniform
+    lighting and both controlled and uncontrolled backgrounds
+    '''
     def __init__(self):
         super().__init__(HGR().name)
         self.name = 'HGR2A'
@@ -61,6 +69,10 @@ class HGR2A(skin_dataset, metaclass=SingletonMeta):
         self.import_csv = os.path.join(self.dir, 'HGR_data.csv')
 
 class HGR2B(skin_dataset, metaclass=SingletonMeta):
+    '''
+    HGR2B features 574 constant-sized pictures taken with a
+    controlled background and in uniform lighting
+    '''
     def __init__(self):
         super().__init__(HGR().name)
         self.name = 'HGR2B'
