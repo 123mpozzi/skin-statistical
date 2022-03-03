@@ -144,3 +144,16 @@ def cross_preds(timestr: str, train_databases: list, predict_databases: list = N
             image_paths = predict_db.get_all_paths() # predict the whole dataset
             out_dir = pred_dir('cross', timestr, f'{train_db.name}_on_{predict_db.name}')
             make_predictions(image_paths, model_name, out_dir)
+
+if __name__ == "__main__":
+    with open('hashes.csv', 'w') as out:
+        path = './predictions/bayes_st/base'
+        for elem in os.listdir(path):
+            elem = os.path.join(path, elem)
+            if os.path.isdir(elem):
+                out.write(hash_dir(elem) + ',' + elem + '\n')
+        path = './predictions/bayes_st/cross'
+        for elem in os.listdir(path):
+            elem = os.path.join(path, elem)
+            if os.path.isdir(elem):
+                out.write(hash_dir(elem) + ',' + elem + '\n')

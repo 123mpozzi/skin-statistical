@@ -1,9 +1,8 @@
 import os, sys
 import numpy as np
-from tqdm import tqdm # progress bar
-from PIL import Image # used as image loader
+from tqdm import tqdm
+from PIL import Image
 import math
-import cv2 # image processing
 
 
 ## USAGE: python metrics.py <prediction-folder (predictions/HGR_small_on_ECU)>

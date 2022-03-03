@@ -28,9 +28,9 @@ def get_db_by_name(name: str) -> skin_dataset:
     
     exit(f'Invalid skin database: {name}')
 
-def skin_databases_names() -> list:
+def skin_databases_names(db_list: list = skin_databases) -> list:
     names = []
-    for db in skin_databases:
+    for db in db_list:
         names.append(db.name)
     return names
 

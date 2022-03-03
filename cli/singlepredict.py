@@ -60,22 +60,12 @@ def bench(size, observations):
               type=click.Choice(skin_databases_names(), case_sensitive=False))
 @click.option('--from', '-f', 'from_', type=int, default = 0, help = 'Slice start')
 @click.option('--to', '-t', type=int, default = -1, help='Slice end (index excluded)')
-@click.option('--set', '-s', 'set_', type=click.Choice(['test', 'all']), help='Force prediction set')
-def single(model, predict_, from_, to, set_):
-    pred_set = set_
-
+def single(model, predict_, from_, to):
     # prediction on self
     if predict_ is None:
         predict_ = model
-
-    # Determine whether to use test ser ot whole dataset
-    if pred_set is None: # no forced prediction set, use normal behaviour
-        if predict_ == model:
-            pred_set = 'test'
-        elif predict_ != model:
-            pred_set = 'all'
     
-    if pred_set == 'test':
+    if predict_ == model:
         image_paths = get_db_by_name(predict_).get_test_paths() # on same dataset, use test paths
     else:
         image_paths = get_db_by_name(predict_).get_all_paths() # on cross datasets, use all paths
