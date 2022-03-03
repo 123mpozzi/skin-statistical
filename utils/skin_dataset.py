@@ -7,6 +7,7 @@ import cv2
 import imghdr
 from tqdm import tqdm
 from shutil import copyfile
+from logging import critical, info, error, warning, debug
 
 # Abstraction of a skin dataset
 class skin_dataset(object):
@@ -51,7 +52,8 @@ class skin_dataset(object):
             file.close()
         except Exception:
             print(traceback.format_exc())
-            exit('(X) Error on accessing ' + csv_file)
+            critical('Error on accessing ' + csv_file)
+            exit()
         
         return file_content
     
@@ -97,9 +99,10 @@ class skin_dataset(object):
                 files.append((ori_path, gt_path))
 
         if len(files) == 0:
-            exit(f'(X) {csv_file} No paths found matching: {list_str}')
+            critical(f'{csv_file} No paths found matching: {list_str}')
+            exit()
         else:
-            print(f'(i) {csv_file} Found {len(files)} paths matching: {list_str}')
+            info(f'{csv_file} Found {len(files)} paths matching: {list_str}')
         
         return files
 
@@ -125,10 +128,9 @@ class skin_dataset(object):
             matches = (self.nt_testing)
         return len(self.match_paths(self.csv, matches, 2))
 
-    def get_training_and_testing_sets(self, file_list: list, split: float = 0.7, debug: bool = False):
-        if debug:
-            print(file_list)
-        
+    def get_training_and_testing_sets(self, file_list: list, split: float = 0.7):
+        debug(file_list)
+
         split_index = floor(len(file_list) * split)
         training = file_list[:split_index]
         testing = file_list[split_index:]
@@ -166,7 +168,7 @@ class skin_dataset(object):
             assert self.note in self.available_notes, 'Invalid note: ' + self.note
         
         if self.gt == self.ori:
-            print('''(!) Warning: code is unlikely to work if original images are
+            warning('''Code is unlikely to work if original images are
             in the same directory as mask images''')
 
         # Catch eventual errors
@@ -187,9 +189,9 @@ class skin_dataset(object):
             else:
                 self.import_configuration(force=True)
             
-            print(f'(V) Dataset {self.name} import success!')
+            info(f'Dataset {self.name} import success!')
         except Exception:
-            print(f'(X) Dataset {self.name} import failed!')
+            error(f'Dataset {self.name} import failed!')
             stacktrace = traceback.format_exc()
             print(stacktrace)
         finally:
@@ -256,7 +258,7 @@ def get_variable_filename(filename: str, format: str) -> str:
 
 
 # Creates CSV file containing dataset metadata (such as paths of images)
-def analyze_dataset(db: skin_dataset, append: bool = False, debug = False):
+def analyze_dataset(db: skin_dataset, append: bool = False):
     # Use gt/ori if not processed, else new_gt/new_ori
     gt_dir = db.gt
     ori_dir = db.ori
@@ -299,14 +301,13 @@ def analyze_dataset(db: skin_dataset, append: bool = False, debug = False):
                         i += 1
                         matched = True
                         break
-                if debug and not matched:
-                    print(f'No matches found for {gt_identifier}')
+                if not matched:
+                    debug(f'No matches found for {gt_identifier}')
             else:
-                if debug:
-                    print(f'File {gt_path} is not an image')
+                debug(f'File {gt_path} is not an image')
             progress_bar.update()
     progress_bar.close()
-    print(f"Found {i} images")
+    info(f"Found {i} images")
 
 # Perform image-processing on a directory content
 # 
@@ -368,7 +369,7 @@ def process_images(db: skin_dataset, data_dir: str, process_pipeline: str, out_d
                 elif operation == 'reload':
                     im = cv2.imread(im_path)
                 else:
-                    print(f'Image processing operation unknown: {operation}')
+                    error(f'Image processing operation unknown: {operation}')
 
             # Save processing 
             cv2.imwrite(im_path, im)

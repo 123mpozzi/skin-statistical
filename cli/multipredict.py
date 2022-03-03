@@ -1,9 +1,11 @@
-import click
-from utils.db_utils import *
 import subprocess
 import psutil
+import click
+from utils.db_utils import *
 
 # Parallelize the predictions by calling predict.py multiple times
+
+cmd_root = 'python main.py single '
 
 # TODO: try work=-2
 # TODO: multiprocess: do they touch the dat.csv? if so change it in the py
@@ -87,18 +89,18 @@ def run_commands(commands: list, workers: int, debug: bool):
 
 # Main command which groups the subcommands: single, batch
 @click.group()
-def cli():
+def cli_multipredict():
     pass
 
-@cli.command(short_help='Multiprocessing on single prediction')
+@cli_multipredict.command(name='singlem', short_help='Multiprocessing on single prediction')
 @click.option('--model', '-m',
-              type=click.Choice(skin_databases_names(), case_sensitive=True), required=True)
+              type=click.Choice(skin_databases_names(), case_sensitive=False), required=True)
 @click.option('--predict', '-p', 'predict_',
-              type=click.Choice(skin_databases_names(), case_sensitive=True))
+              type=click.Choice(skin_databases_names(), case_sensitive=False))
 @click.option('--set', '-s', 'set_', type=click.Choice(['test', 'all']), help='Force prediction set')
 @click.option('--workers', '-w', type=int, default=-1, help = 'Number of processes, -1 for automatic')
 @click.option('--debug/--no-debug', '-d', 'debug', default=False, help = 'Print more info')
-def single(model, predict_, set_, workers, debug):
+def single_multi(model, predict_, set_, workers, debug):
     pred_set = ''
 
     # Determine which set to use for predictions: test or all
@@ -120,7 +122,7 @@ def single(model, predict_, set_, workers, debug):
         print(f'Workers  = {workers}')
         print(f'Workload = {workload}')
 
-    cmd_single = 'python predict.py --model={} --predict={} --from={} --to={}' + pred_set
+    cmd_single = cmd_root + '--model={} --predict={} --from={} --to={}' + pred_set
     commands = []
     # Assign work to each worker
     slice_start = 0
@@ -140,14 +142,14 @@ def single(model, predict_, set_, workers, debug):
     run_commands(commands, workers, debug)
 
 
-@cli.command(short_help='Multiprocessing on batch predictions (eg. base, cross)')
+@cli_multipredict.command(name='batchm', short_help='Multiprocessing on batch predictions (eg. base, cross)')
 @click.option('--type', '-t', type=click.Choice(['base', 'cross', 'all']), required=True)
 @click.option('--skintones/--no-skintones', 'skintones', default=False,
               help = 'Whether to predict on skintone sub-datasets')
 @click.option('--workers', '-w', type=int, default=-1, help = 'Number of processes, -1 for automatic')
 @click.option('--debug/--no-debug', '-d', 'debug', default=False, help = 'Print more info')
-def batch(type, skintones, workers, debug):
-    models = skin_databases_names()
+def batch_multi(type, skintones, workers, debug):
+    models = skin_databases_normal
     if skintones == True:
         models = skin_databases_skintones # TODO: test skintones
 
@@ -155,7 +157,7 @@ def batch(type, skintones, workers, debug):
 
     commands = []
     if type == 'base':
-        cmd_single = 'python predict.py --model={} --from={} --to={}'
+        cmd_single = cmd_root + '--model={} --from={} --to={}'
 
         # Get total db size
         db_sizes = {}
@@ -201,7 +203,7 @@ def batch(type, skintones, workers, debug):
 
         run_commands(commands, workers, debug)
     elif type == 'cross':
-        cmd_single = 'python predict.py --model={} --predict={} --from={} --to={}'
+        cmd_single = cmd_root + '--model={} --predict={} --from={} --to={}'
 
         # Get total db size
         db_sizes = {}
@@ -254,6 +256,3 @@ def batch(type, skintones, workers, debug):
     else: # 'all' does either base+cross or skinbase+skincross, depending on --skintone
         #models = skin_databases 
         pass
-
-if __name__ == "__main__":
-    cli()

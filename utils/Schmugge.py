@@ -7,6 +7,7 @@ from tqdm import tqdm
 import albumentations as aug
 import numpy as np
 from math import floor
+from logging import info, error, critical
 
 
 class Schmugge(skin_dataset, metaclass=SingletonMeta):
@@ -86,7 +87,7 @@ class Schmugge(skin_dataset, metaclass=SingletonMeta):
                         tmp = {}
                         i = 0
         
-        print(f'Schmugge custom config read correctly, found {len(data)} images')
+        info(f'Schmugge custom config read correctly, found {len(data)} images')
         return data
     
     # Reimport the dataset
@@ -186,9 +187,9 @@ class Schmugge(skin_dataset, metaclass=SingletonMeta):
             progress_bar.close()
             if predefined:
                 self.import_configuration(force=True)
-            print(f'(V) Dataset {self.name} import success!')
+            info(f'Dataset {self.name} import success!')
         except Exception:
-            print(f'(X) Dataset {self.name} import failed!')
+            error(f'Dataset {self.name} import failed!')
             stacktrace = traceback.format_exc()
         finally:
             return stacktrace
@@ -332,7 +333,7 @@ def is_similar(image1, image2):
     return image1.shape == image2.shape and not(np.bitwise_xor(image1,image2).any())
 
 def count_skintones(db: skin_dataset, skintone: str) -> int:
-    assert skintone in Schmugge().skintones, f'Invalid skintone: {skintone}'
+    assert skintone in Schmugge().skintones, critical(f'Invalid skintone: {skintone}')
     return len(db.match_paths((skintone), 3, csv_file=Schmugge().import_csv))
 
 # Filter the Schmugge CSV file to leave only lines with given skintone

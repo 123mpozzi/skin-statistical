@@ -1,10 +1,6 @@
 __pycache__
-image
-mask
 predictions
-predictions_old
 venv
 dataset
-*.csv
 models/*.csv
-bench*.txt
+debug.log
