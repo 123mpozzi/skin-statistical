@@ -10,54 +10,56 @@ cmd_root = 'python main.py single '
 
 def determine_workers(workers: int) -> int:
     '''
-    Determine the number of workers automatically based on
-    the system resources
+    If workers == -1, number of workers is equal to the
+    number of system's physical cores
     '''
-    # on auto, # workers = # physical cpu cores
     if workers == -1:
         workers = psutil.cpu_count(logical=False)
     return workers
 
-def determine_workers_per_db(db_sizes: dict, workload: int, workers: int, debug: bool) -> dict:
+def determine_tasks_per_db(db_sizes: dict, workload: int,
+                                total_db_size: int, debug: bool) -> dict:
     '''
-    Try to assign a proper number of workers per each dataset
+    Try to assign a proper number of tasks per each dataset
 
     eg: Workload = 300.
-        : If db1 has 200  images  -> 1 worker
-        : If db2 has 1000 images  -> 4 workers
-    '''
-    remaining_workers = workers
+        : If db1 has 200  images  -> 1 task
+        : If db2 has 1000 images  -> 4 tasks
     
-    while remaining_workers > 0:
+    Return a dict containing each db with their size and tasks assigned
+    '''
+    remaining_tasks = total_db_size // workload
+    
+    while remaining_tasks > 0:
         # copy because it is being edited in the loop
         for entry in db_sizes.copy():
             if debug:
                 print(db_sizes)
-                print(remaining_workers)
-            # Just consider db entries, not workers-related ones
-            if entry[-1] == 'w':
+                print(remaining_tasks)
+            # Just consider db entries, not tasks-related ones
+            if entry[-1] == 'w': # (if string ending with 'w')
                 continue
 
-            key = entry+'w' # key containing db + number of workers (eg. ECUw : 1)
+            key = entry+'w' # key containing db + number of tasks (eg. ECUw : 1)
 
-            if remaining_workers != 0:
+            if remaining_tasks != 0:
                 # db need more work than a workload unit
                 if db_sizes[entry] > workload:
-                    # Add a worker
+                    # Add a task
                     if key in db_sizes:
                         db_sizes[key] = int(db_sizes[key]) + 1
                     else:
                         db_sizes[key] = 1
-                    remaining_workers = remaining_workers -1
+                    remaining_tasks = remaining_tasks -1
                 # A workload unit is enough
                 else:
                     # If all work needed in current db is already assigned, continue
                     if key in db_sizes and db_sizes[key] == 1:
                         continue
 
-                    # Add a worker
+                    # Add a task
                     db_sizes[key] = 1
-                    remaining_workers = remaining_workers -1
+                    remaining_tasks = remaining_tasks -1
             else:
                 break
     return db_sizes
@@ -66,8 +68,17 @@ def calculate_workload(models: list, workers: int, use_only_test_set: bool = Fal
     '''
     Calculate the workload by measuring the size of each db
 
+    Aim for small tasks occupying less than 10 minutes (depending on images size)
+    or else big dataset could occupy a worker for a very long time,
+    while other workers are sleeping.
+
+    Also aim for a number of tasks that is multiple of the number of workers
+    so that they can always run in parallel
+
     Return also a dict containing each db with their size
     '''
+    assert workers > 0, 'Number of workers is negative! Is it using the default of -1? Call determine_workers(workers)'
+
     # Get total db size
     db_sizes = {}
     total_db_size = 0
@@ -80,13 +91,30 @@ def calculate_workload(models: list, workers: int, use_only_test_set: bool = Fal
         db_sizes[m] = db_size
         total_db_size = total_db_size + db_size
     
-    # Calculate workload
     workload = total_db_size // workers
-    return workload, db_sizes
+    j = 2 # each worker does 2 tasks
+    while workload > 300: # Aim for small tasks occupying less than 10 minutes
+        workload = total_db_size // (workers *j)
+        j = j+1 # each worker does 3 tasks, etc..
 
-# Assign work to each worker
-def assign_work(cmd_single: str, db_sizes: dict, workload: int,
+    return workload, db_sizes, total_db_size
+
+def generate_commands(cmd_single: str, target_size: int, target_tasks: int, workload: int,
                 model_name: str, target_name: str, bar_position: int) -> list:
+    '''
+    Translate tasks regarding a given target dataset into `singlepredict.py` commands
+
+    Arguments
+    ---
+    cmd_single: `singlepredict.py` command to format with other arguments
+    target_size: size of target dataset in images
+    target_tasks: number of tasks assigned to target dataset
+    workload: the workload
+    model_name: the model name
+    target_name: the target name
+    bar_position: where the `tqdm` progress bar appears on console
+    '''
+
     # Determine if it is a base prediction (on self), or a cross-dataset prediction
     if target_name is None:
         target_name = model_name
@@ -94,19 +122,16 @@ def assign_work(cmd_single: str, db_sizes: dict, workload: int,
     
     commands = []
 
-    # Workers per current db
-    db_workers = db_sizes[target_name+'w'] # TARGETw (w as workload)
-
     slice_start = 0
-    for i in range(db_workers):
+    for i in range(target_tasks):
         # Current db finished, pass to the next one
-        if slice_start > db_sizes[target_name] or slice_start == -1:
+        if slice_start > target_size or slice_start == -1:
             break
 
         slice_end = slice_start + workload # note: end index is excluded in predictions
 
         # The last worker finish the set
-        if i == db_workers -1 or slice_end > db_sizes[target_name]:
+        if i == target_tasks -1 or slice_end > target_size:
             slice_end = -1
         
         # Format the command properly
@@ -119,7 +144,6 @@ def assign_work(cmd_single: str, db_sizes: dict, workload: int,
         
         # Update bar position
         bar_position = bar_position + 1
-
         # Update starting index
         slice_start = slice_end
     return commands, bar_position
@@ -144,7 +168,7 @@ def run_commands(commands: list, workers: int, debug: bool):
     The program will automatically handle the executions even
     if there are more commands than workers
 
-    It also tries to print the status of each alive worker via tqdm
+    It also tries to print the status of each alive worker via `tqdm`
     '''
     if debug:
         print(f'Resulting commands: {len(commands)}')
@@ -180,6 +204,46 @@ def run_commands(commands: list, workers: int, debug: bool):
         gone, alive = psutil.wait_procs(procs_list, timeout=3)
         alive_procs = len(alive)
 
+def gen_base_cmds(models: list, workers: int, debug: bool = False):
+    '''Return a list containing single commands needed to perform base dataset predictions'''
+    commands = []
+    cmd_single = cmd_root + '--model={} --from={} --to={} --bar={}'
+
+    # Calculate workload and assign tasks
+    workload, db_sizes, total_db_size = calculate_workload(models, workers, use_only_test_set=True)
+    db_sizes = determine_tasks_per_db(db_sizes, workload, total_db_size, debug)
+    log_debug(debug, workers, workload, db_sizes)
+
+    bar_position = 0
+    for m in models:
+        # Assign work and concatenate the resulting commands
+        cmds_on_target, bar_position = generate_commands(cmd_single, db_sizes[m], db_sizes[m+'w'], workload, m, None, bar_position)
+        commands.extend(cmds_on_target)
+    return commands
+
+def gen_cross_cmds(models: list, workers: int, debug: bool = False):
+    '''Return a list containing single commands needed to perform cross dataset predictions'''
+    commands = []
+    cmd_single = cmd_root + '--model={} --predict={} --from={} --to={} --bar={}'
+
+    # Calculate workload and assign tasks
+
+    # on cross predictions, use all paths
+    workload, db_sizes, total_db_size = calculate_workload(models, workers, use_only_test_set=False)
+    db_sizes = determine_tasks_per_db(db_sizes, workload, total_db_size, debug)
+    log_debug(debug, workers, workload, db_sizes)
+
+    bar_position = 0
+    for m in models: # model: train dataset
+        for p in models: # prediction: target dataset
+            # In cross dataset do not predict on self
+            if m == p:
+                continue
+            # Assign work and concatenate the resulting commands
+            cmds_on_target, bar_position = generate_commands(cmd_single, db_sizes[m], db_sizes[m+'w'], workload, m, p, bar_position)
+            commands.extend(cmds_on_target)
+    return commands
+
 # Main command which groups the subcommands: single, batch
 @click.group()
 def cli_multipredict():
@@ -193,27 +257,33 @@ def cli_multipredict():
 @click.option('--workers', '-w', type=int, default=-1, help = 'Number of processes, -1 for automatic')
 @click.option('--debug/--no-debug', '-d', 'debug', default=False, help = 'Print more info')
 def single_multi(model, predict_, workers, debug):
+    models = [predict_]
+    # Check if the number of workers need to be automatically determined
+    workers = determine_workers(workers)
+    
     # Get images to predict
     if predict_ == model:
-        image_paths = get_db_by_name(predict_).get_test_paths() # on same dataset, use test paths
+        # on same dataset, use test paths
+        workload, db_sizes, total_db_size = calculate_workload(models, workers, use_only_test_set=True)
     else:
-        image_paths = get_db_by_name(predict_).get_all_paths() # on cross datasets, use all paths
-    db_size = len(image_paths)
+        # on cross datasets, use all paths
+        workload, db_sizes, total_db_size = calculate_workload(models, workers, use_only_test_set=False)
 
-    # Calculate workload
-    workers = determine_workers(workers)
-    workload = db_size // workers
-    log_debug(debug, workers, workload)
+    # Calculate workload and assign tasks
+    db_sizes = determine_tasks_per_db(db_sizes, workload, total_db_size, debug)
+    task_number = db_sizes[predict_ + 'w']
+    log_debug(debug, workers, workload, db_sizes)
 
-    cmd_single = cmd_root + '--model={} --predict={} --from={} --to={} --bar={}'
     commands = []
-    # Assign work to each worker
+    cmd_single = cmd_root + '--model={} --predict={} --from={} --to={} --bar={}'
+
+    # Translate tasks to commands
     slice_start = 0
-    for i in range(workers):
+    for i in range(task_number):
         slice_end = slice_start + workload # note: end index is excluded in predictions
 
         # The last worker finish the set
-        if i == workers -1: # TODO: need more checks like in batch? What if slice_end > db_size?
+        if i == task_number -1 or slice_end > total_db_size:
             slice_end = -1
         
         commands.append(cmd_single.format(model, predict_, slice_start, slice_end, i))
@@ -242,42 +312,13 @@ def batch_multi(type, skintones, workers, debug):
     workers = determine_workers(workers)
 
     # Determine commands to run
-    commands = [] # will contain commands to be called by the terminal
     if type == 'base':
-        cmd_single = cmd_root + '--model={} --from={} --to={} --bar={}'
-
-        # Calculate workload via db sizes
-        workload, db_sizes = calculate_workload(models, workers, use_only_test_set=True)
-        # Assign workers to each db
-        db_sizes = determine_workers_per_db(db_sizes, workload, workers, debug)
-        log_debug(debug, workers, workload, db_sizes)
-
-        bar_position = 0
-        for m in models:
-            # Assign work and concatenate the resulting commands
-            cmds_on_target, bar_position = assign_work(cmd_single, db_sizes, workload, m, None, bar_position)
-            commands.extend(cmds_on_target)
+        commands = gen_base_cmds(models, workers, debug=debug)
     elif type == 'cross':
-        cmd_single = cmd_root + '--model={} --predict={} --from={} --to={} --bar={}'
-
-        # Calculate workload via db sizes
-        # on cross predictions, use all paths
-        workload, db_sizes = calculate_workload(models, workers, use_only_test_set=False)
-        # Assign workers to each db
-        db_sizes = determine_workers_per_db(db_sizes, workload, workers, debug)
-        log_debug(debug, workers, workload, db_sizes)
-
-        bar_position = 0
-        for m in models: # model: train dataset
-            for p in models: # prediction: target dataset
-                # In cross dataset do not predict on self
-                if m == p:
-                    continue
-                # Assign work and concatenate the resulting commands
-                cmds_on_target, bar_position = assign_work(cmd_single, db_sizes, workload, m, p, bar_position)
-                commands.extend(cmds_on_target)
+        commands = gen_cross_cmds(models, workers, debug=debug)
     else: # 'all' does either base+cross or skinbase+skincross, depending on --skintone
-        #models = skin_databases 
+        commands = gen_base_cmds(models, workers, debug=debug)
+        commands.extend(gen_cross_cmds(models, workers, debug=debug))
         pass
 
     # start processes and do not wait
