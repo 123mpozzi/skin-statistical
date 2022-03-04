@@ -22,6 +22,7 @@ class VPU(skin_dataset, metaclass=SingletonMeta):
         return (ED_train(), ED_test(), LIRIS_train(), LIRIS_test(), SSG_train(), SSG_test(),
         UT_train(), UT_test(), AMI_train(), AMI_test())
     
+    # Note: no need to use argument 'predefined' as this dataset has already defined splits
     def reset(self, predefined) -> str:
         trace = ''
 

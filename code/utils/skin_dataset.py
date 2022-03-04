@@ -23,7 +23,7 @@ class skin_dataset(object):
         self.not_defined = 'nd'
         self.available_notes = (self.nt_training, self.nt_validation, self.nt_testing, self.not_defined)
         # Paths
-        self.dir = os.path.join('.', 'dataset', self.name)
+        self.dir = os.path.join('..', 'dataset', self.name)
         self.csv = os.path.join(self.dir, 'data.csv')
 
         # This class should be used as an abstraction
@@ -135,6 +135,14 @@ class skin_dataset(object):
         training = file_list[:split_index]
         testing = file_list[split_index:]
         return training, testing
+
+    # TODO: !!! (also in Schmugge I think -> everywhere import_csv is imported you must not use copyfile
+    # but rescan csv, find corresponding filenames [use the function -> get_variable_filename ?]
+    # and update the paths (eg: ../dataset))
+    #
+    # * do not directly copy import_csv into self.csv
+    # as paths may be updated (eg with ../dataset)
+    # -> rescan csv
 
     def import_configuration(self, force: bool = False):
         '''Check if `self.csv` file exists: if not, try to import it from `self.import_csv`'''

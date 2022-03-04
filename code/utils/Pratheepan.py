@@ -36,6 +36,9 @@ class Pratheepan(skin_dataset, metaclass=SingletonMeta):
             if newtrace: # if string is not empty
                 trace = trace + newtrace + '\n'
         
+        if not predefined:
+            self.randomize() # Pratheepan does not have defined splits itself
+
         return trace
 
 class Pratheepan_face(skin_dataset, metaclass=SingletonMeta):

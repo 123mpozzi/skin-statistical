@@ -10,7 +10,7 @@ from utils.Pratheepan import Pratheepan
 import os
 
 # db_utils è specifico per questo metodo probabilistico, in Skinny cambiano le utils (model_name, ..)
-models_dir = 'models'
+models_dir = os.path.join('..', 'models')
 
 #skin_databases = (ECU(), Schmugge(), HGR(), dark(), medium(), light())
 skin_databases_normal = (ECU(), Schmugge(), HGR())

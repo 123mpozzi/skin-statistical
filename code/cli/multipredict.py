@@ -6,6 +6,7 @@ from utils.db_utils import *
 
 # Parallelize the predictions by calling predict.py multiple times
 
+
 cmd_root = 'python main.py single '
 
 def determine_workers(workers: int) -> int:
@@ -293,7 +294,6 @@ def single_multi(model, predict_, workers, debug):
     
     # start processes and do not wait
     run_commands(commands, workers, debug)
-
 
 @cli_multipredict.command(name='batchm', short_help='Multiprocessing on batch predictions (eg. base, cross)')
 @click.option('--type', '-t', type=click.Choice(['base', 'cross', 'all']), required=True)

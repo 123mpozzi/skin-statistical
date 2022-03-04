@@ -18,6 +18,14 @@ class ECU(skin_dataset, metaclass=SingletonMeta):
         self.gt = os.path.join(self.dir, 'skin_masks')
         self.ori = os.path.join(self.dir, 'origin_images')
         # TODO: re-generate split from Skinny ipynb and set self.import_csv = ..
+    
+    def reset(self, predefined: bool = True) -> str:
+        trace = super().reset(predefined=predefined)
+        
+        if not predefined:
+            self.randomize() # ECU does not have defined splits itself
+        
+        return trace
 
 class ECU_bench(skin_dataset, metaclass=SingletonMeta):
     '''ECU dataset being setup for inference time evaluation'''

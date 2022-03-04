@@ -21,11 +21,11 @@ def pred_dir(type: str, timestr: str, name: str) -> str:
     prediction type, timestamp string, and predictions name/title
     '''
     if type in ('base', 'cross'):
-        return os.path.join('.', 'predictions', timestr, method_name, type, name)
+        return os.path.join('..', 'predictions', timestr, method_name, type, name)
     elif type == 'bench':
-        return os.path.join('.', 'predictions', type, timestr, name)
+        return os.path.join('..', 'predictions', type, timestr, name)
     else: # default
-        return os.path.join('.', 'predictions', name)
+        return os.path.join('..', 'predictions', name)
 
 def open_image(src):
     # Convert to RGB as some image may be read as RGBA: https://stackoverflow.com/a/54713582
