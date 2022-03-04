@@ -61,7 +61,8 @@ def bench(size, observations):
               type=click.Choice(skin_databases_names(), case_sensitive=False))
 @click.option('--from', '-f', 'from_', type=int, default = 0, help = 'Slice start')
 @click.option('--to', '-t', type=int, default = -1, help='Slice end (index excluded)')
-def single(model, predict_, from_, to):
+@click.option('--bar', '-b', type=int, default = -1, help='Progress bar position (for multiprocessing)')
+def single(model, predict_, from_, to, bar):
     '''SINGLE: 1-on-1 datasets prediction. Can be on self too'''
     # prediction on self
     if predict_ is None:
@@ -79,4 +80,4 @@ def single(model, predict_, from_, to):
     # Make predictions
     model_name = get_model_filename(get_db_by_name(model))
     out_dir = pred_dir(None, None, name = f'{model}_on_{predict_}')
-    make_predictions(image_paths[from_:to], model_name, out_dir)
+    make_predictions(image_paths[from_:to], model_name, out_dir, pbar_position=bar)

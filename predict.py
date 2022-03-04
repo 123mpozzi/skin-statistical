@@ -41,7 +41,7 @@ def pred_out(path_x: str, out_dir: str) -> list:
     return (out_p, out_y, out_x)
 
 # out_bench is the file in which append inference performance data
-def predict(probability, path_x, path_y, out_dir, out_bench: str = None):
+def predict(probability, path_x, path_y, out_dir, out_bench: str = ''):
     im = open_image(path_x)
     temp = im.copy()
     im.close()
@@ -60,7 +60,7 @@ def predict(probability, path_x, path_y, out_dir, out_bench: str = None):
     copyfile(path_y, out_y)
 
     # Save inference performance to file
-    if out_bench:
+    if out_bench: # empty strings are falsy
         with open(out_bench, 'a') as out:
             out.write(f'{path_x},{t_elapsed}\n')
 
@@ -90,18 +90,24 @@ def create_image(im: Image, probability, out_p) -> float:
     im.save(out_p)
     return t_elapsed
 
-def make_predictions(image_paths, in_model, out_dir, out_bench: str = None):
+def make_predictions(image_paths, in_model, out_dir, out_bench: str = '', pbar_position: int = -1):
     assert os.path.isfile(in_model), critical('Model file not existing: ' + in_model)
 
     info("Reading CSV...")
-    probability = pd.read_csv(in_model) # getting the rows from csv    
-    info('Data collection completed')
+    probability = pd.read_csv(in_model) # getting the rows from csv
+    if pbar_position == -1: # on multiprocessing do not clog console
+        info('Data collection completed')
 
     # make dirs
     for basedir in ('p', 'y', 'x'):
         os.makedirs(os.path.join(out_dir, basedir), exist_ok=True)
-
-    for i in tqdm(image_paths):
+    
+    if pbar_position == -1: # default bar position
+        image_paths_tqdm = tqdm(image_paths)
+    else: # set bar position
+        image_paths_tqdm = tqdm(image_paths, position=pbar_position)
+    
+    for i in image_paths_tqdm:
         im_abspath = os.path.abspath(i[0]) 
         y_abspath = os.path.abspath(i[1])
 
@@ -113,7 +119,10 @@ def make_predictions(image_paths, in_model, out_dir, out_bench: str = None):
             error(f'Failed to infer on image: {im_abspath}')
             print(traceback.format_exc())
 
-    predictions_hash = print(hash_dir(out_dir))
+    predictions_hash = hash_dir(out_dir)
+
+    if pbar_position == -1: # on multiprocessing do not clog console
+        print(predictions_hash)
     return predictions_hash
 
 def base_preds(timestr: str, models: list):
