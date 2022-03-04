@@ -72,6 +72,13 @@ class skin_dataset(object):
         row += '\n'
         return row
 
+    def to_basenames(self, row: str) -> list:
+        '''Return the given row with basenames instead of paths for ori and gt'''
+        csv_fields = self.split_csv_fields(row)
+        ori_basename = os.path.basename(csv_fields[0])
+        gt_basename = os.path.basename(csv_fields[1])
+        return self.to_csv_row(ori_basename, gt_basename, *csv_fields[2:])
+
     def match_paths(self, matches: list, match_col: int, csv_file = None) -> list:
         '''
         Return a list of paths formatted as a tuple:

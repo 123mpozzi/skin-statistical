@@ -350,10 +350,10 @@ class medium(Schmugge, metaclass=SingletonMeta):
 def is_similar(image1, image2):
     return image1.shape == image2.shape and not(np.bitwise_xor(image1,image2).any())
 
-def count_skintones(db: skin_dataset, skintone: str) -> int:
+def count_skintones(db: Schmugge, skintone: str, csv_file=Schmugge().import_csv) -> int:
     '''Count the rows of a given skintone inside a dataset's CSV file'''
     assert skintone in Schmugge().skintones, critical(f'Invalid skintone: {skintone}')
-    return len(db.match_paths((skintone), 3, csv_file=Schmugge().import_csv))
+    return len(db.match_paths((skintone), 3, csv_file))
 
 def filter_csv(db: Schmugge, skintone):
     '''Filter the Schmugge CSV file to leave only lines with given skintone'''

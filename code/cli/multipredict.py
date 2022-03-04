@@ -255,7 +255,7 @@ def cli_multipredict():
               type=click.Choice(skin_databases_names(), case_sensitive=False), required=True)
 @click.option('--predict', '-p', 'predict_',
               type=click.Choice(skin_databases_names(), case_sensitive=False))
-@click.option('--workers', '-w', type=int, default=-1, help = 'Number of processes, -1 for automatic')
+@click.option('--workers', '-w', type=int, default=-1, help = 'Number of processes, default is auto')
 @click.option('--debug/--no-debug', '-d', 'debug', default=False, help = 'Print more info')
 def single_multi(model, predict_, workers, debug):
     models = [predict_]
@@ -299,7 +299,7 @@ def single_multi(model, predict_, workers, debug):
 @click.option('--type', '-t', type=click.Choice(['base', 'cross', 'all']), required=True)
 @click.option('--skintones/--no-skintones', 'skintones', default=False,
               help = 'Whether to predict on skintone sub-datasets')
-@click.option('--workers', '-w', type=int, default=-1, help = 'Number of processes, -1 for automatic')
+@click.option('--workers', '-w', type=int, default=-1, help = 'Number of processes, default is auto')
 @click.option('--debug/--no-debug', '-d', 'debug', default=False, help = 'Print more info')
 def batch_multi(type, skintones, workers, debug):
     models = skin_databases_normal
