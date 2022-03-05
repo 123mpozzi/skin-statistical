@@ -252,16 +252,20 @@ def cli_multipredict():
 
 @cli_multipredict.command(name='singlem', short_help='Multiprocessing on single prediction')
 @click.option('--model', '-m',
-              type=click.Choice(skin_databases_names(), case_sensitive=False), required=True)
+              type=click.Choice(skin_databases_names(get_models()), case_sensitive=False), required=True)
 @click.option('--predict', '-p', 'predict_',
-              type=click.Choice(skin_databases_names(), case_sensitive=False))
+              type=click.Choice(skin_databases_names(get_datasets()), case_sensitive=False))
 @click.option('--workers', '-w', type=int, default=-1, help = 'Number of processes, default is auto')
 @click.option('--debug/--no-debug', '-d', 'debug', default=False, help = 'Print more info')
 def single_multi(model, predict_, workers, debug):
+    # prediction on self
+    if predict_ is None:
+        predict_ = model
+
     models = [predict_]
     # Check if the number of workers need to be automatically determined
     workers = determine_workers(workers)
-    
+
     # Get images to predict
     if predict_ == model:
         # on same dataset, use test paths
@@ -302,7 +306,7 @@ def single_multi(model, predict_, workers, debug):
 @click.option('--workers', '-w', type=int, default=-1, help = 'Number of processes, default is auto')
 @click.option('--debug/--no-debug', '-d', 'debug', default=False, help = 'Print more info')
 def batch_multi(type, skintones, workers, debug):
-    models = skin_databases_normal
+    models = get_models()
     if skintones == True:
         models = skin_databases_skintones
     

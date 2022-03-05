@@ -15,11 +15,11 @@ def cli_predict():
 def batch(type, skintones):
     '''
     BATCH: N-on-M datasets predictions
-    Note: will use only datasets featured in the thesis
+    N are models, M are datasets
     '''
     timestr = get_timestamp()
 
-    models = skin_databases_normal
+    models = get_models()
     if skintones == True:
         models = skin_databases_skintones
 
@@ -56,9 +56,9 @@ def bench(size, observations):
 
 @cli_predict.command(short_help='1-on-1 datasets prediction')
 @click.option('--model', '-m',
-              type=click.Choice(skin_databases_names(), case_sensitive=False), required=True)
+              type=click.Choice(skin_databases_names(get_models()), case_sensitive=False), required=True)
 @click.option('--predict', '-p', 'predict_',
-              type=click.Choice(skin_databases_names(), case_sensitive=False))
+              type=click.Choice(skin_databases_names(get_datasets()), case_sensitive=False))
 @click.option('--from', '-f', 'from_', type=int, default = 0, help = 'Slice start')
 @click.option('--to', '-t', type=int, default = -1, help='Slice end (index excluded)')
 @click.option('--bar', '-b', type=int, default = -1, help='Progress bar position (for multiprocessing)')

@@ -5,12 +5,13 @@ from tqdm import tqdm
 import os, time
 from shutil import copyfile
 from utils.hash_utils import hash_dir
-from utils.db_utils import get_model_filename
+from utils.db_utils import get_model_filename, get_datasets
 from logging import info, error, critical
 
 # TODO: clean root folder: leave only README, train,predict,metrics,gitignore,requirements
 
 method_name = 'probabilistic'
+predictions_dir = os.path.join('..', 'predictions')
 
 def get_timestamp() -> str:
     return time.strftime("%Y%m%d-%H%M%S")
@@ -21,11 +22,11 @@ def pred_dir(type: str, timestr: str, name: str) -> str:
     prediction type, timestamp string, and predictions name/title
     '''
     if type in ('base', 'cross'):
-        return os.path.join('..', 'predictions', timestr, method_name, type, name)
+        return os.path.join(predictions_dir, timestr, method_name, type, name)
     elif type == 'bench':
-        return os.path.join('..', 'predictions', type, timestr, name)
+        return os.path.join(predictions_dir, type, timestr, name)
     else: # default
-        return os.path.join('..', 'predictions', name)
+        return os.path.join(predictions_dir, name)
 
 def open_image(src):
     # Convert to RGB as some image may be read as RGBA: https://stackoverflow.com/a/54713582
@@ -147,7 +148,7 @@ def cross_preds(timestr: str, train_databases: list, predict_databases: list = N
     and then predictions are performed on all the images of every other datasets
     '''
     if predict_databases is None:
-        predict_databases = train_databases
+        predict_databases = get_datasets() #train_databases
 
     # Load each model
     for train_db in train_databases:

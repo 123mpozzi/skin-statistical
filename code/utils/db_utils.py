@@ -12,8 +12,6 @@ import os
 # db_utils è specifico per questo metodo probabilistico, in Skinny cambiano le utils (model_name, ..)
 models_dir = os.path.join('..', 'models')
 
-#skin_databases = (ECU(), Schmugge(), HGR(), dark(), medium(), light())
-skin_databases_normal = (ECU(), Schmugge(), HGR())
 skin_databases_skintones = (dark(), medium(), light())
 skin_databases = (ECU(), Schmugge(), HGR(), dark(), medium(), light(),
     VPU(), UChile(), abd(), Pratheepan())
@@ -33,6 +31,16 @@ def skin_databases_names(db_list: list = skin_databases) -> list:
     for db in db_list:
         names.append(db.name)
     return names
+
+def get_models() -> list:
+    '''Return the list of skin datasets having a trained model file'''
+    result = [x for x in skin_databases if os.path.isfile(get_model_filename(x))]
+    return result
+
+def get_datasets() -> list:
+    '''Return the list of actual existing skin dataset in file manager'''
+    result = [x for x in skin_databases if os.path.isdir(x.dir)]
+    return result
 
 # Return list of stacktraces occured
 # May be empty it there are no errors

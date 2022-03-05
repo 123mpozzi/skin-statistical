@@ -4,6 +4,7 @@ from utils.db_utils import skin_databases, skin_databases_names, skin_databases_
 from utils.Schmugge import count_skintones
 from cli.manage import reset
 from click.testing import CliRunner
+from helper import set_working_dir
 
 class TestReset(unittest.TestCase):
 
@@ -37,6 +38,8 @@ class TestReset(unittest.TestCase):
         
         Lines are db size
         '''
+        set_working_dir(self)
+
         runner = CliRunner()
 
         print('TESTING COMMANDS...')
@@ -46,7 +49,9 @@ class TestReset(unittest.TestCase):
                 result = runner.invoke(reset, ['-d' + m.name, '--predefined'])
                 print(result)
                 # Command has no errors on run
-                assert result.exit_code == 0
+                #assert result.exit_code == 0
+                self.assertEqual(result.exit_code, 0,
+                    f'Error running reset command with "-d {m.name} --predefined"')
         
         print('TESTING CSV CONTENT...')
         for m in skin_databases:
@@ -67,6 +72,8 @@ class TestReset(unittest.TestCase):
 
         Lines are db size
         '''
+        set_working_dir(self)
+
         runner = CliRunner()
 
         print('TESTING COMMANDS...')
@@ -75,7 +82,9 @@ class TestReset(unittest.TestCase):
             result = runner.invoke(reset, ['-d' + m.name])
             print(result)
             # Command has no errors on run
-            assert result.exit_code == 0
+            #assert result.exit_code == 0
+            self.assertEqual(result.exit_code, 0,
+                f'Error running reset command with "-d {m.name}"')
         
         print('TESTING CSV CONTENT...')
         for m in skin_databases:
