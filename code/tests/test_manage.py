@@ -5,6 +5,7 @@ from utils.Schmugge import count_skintones
 from cli.manage import reset
 from click.testing import CliRunner
 from tests.helper import set_working_dir
+from utils.logmanager import *
 
 
 class TestReset(unittest.TestCase):
@@ -43,26 +44,24 @@ class TestReset(unittest.TestCase):
 
         runner = CliRunner()
 
-        print('TESTING COMMANDS...')
-        for m in skin_databases:
-            if m.import_csv is not None: # db has predefined splits
-                print(m.name)
-                result = runner.invoke(reset, ['-d', m.name, '--predefined'])
-                print(result)
+        info('TESTING COMMANDS...')
+        for d in skin_databases:
+            if d.import_csv is not None: # db has predefined splits
+                result = runner.invoke(reset, ['-d', d.name, '--predefined'])
                 # Command has no errors on run
                 self.assertEqual(result.exit_code, 0,
-                    f'Error running reset command with "-d {m.name} --predefined"')
+                    f'Error running reset command with "-d {d.name} --predefined"\nResult: {result}')
         
-        print('TESTING CSV CONTENT...')
-        for m in skin_databases:
-            if m.import_csv is not None:
-                print(m.name)
+        info('TESTING CSV CONTENT...')
+        for d in skin_databases:
+            if d.import_csv is not None:
+                info('Testing db named ' + d.name)
 
-                csv = m.read_csv()
-                csv_import = m.read_csv(m.import_csv)
+                csv = d.read_csv()
+                csv_import = d.read_csv(d.import_csv)
 
-                self.assert_same_size(csv, csv_import, m)
-                self.compare_content(csv, csv_import, m, equality=True)
+                self.assert_same_size(csv, csv_import, d)
+                self.compare_content(csv, csv_import, d, equality=True)
 
     def test_reset(self):
         '''
@@ -76,28 +75,26 @@ class TestReset(unittest.TestCase):
 
         runner = CliRunner()
 
-        print('TESTING COMMANDS...')
-        for m in skin_databases:
-            print(m.name)
-            result = runner.invoke(reset, ['-d', m.name])
-            print(result)
+        info('TESTING COMMANDS...')
+        for d in skin_databases:
+            result = runner.invoke(reset, ['-d', d.name])
             # Command has no errors on run
             self.assertEqual(result.exit_code, 0,
-                f'Error running reset command with "-d {m.name}"')
+                f'Error running reset command with "-d {d.name}"\nResult: {result}')
         
-        print('TESTING CSV CONTENT...')
-        for m in skin_databases:
+        info('TESTING CSV CONTENT...')
+        for d in skin_databases:
             # Not all filenames has same parameters as in import_csv
-            if m.import_csv is not None:
-                print(m.name)
-                csv = m.read_csv()
-                csv_import = m.read_csv(m.import_csv)
+            if d.import_csv is not None:
+                info('Testing db named ' + d.name)
+                csv = d.read_csv()
+                csv_import = d.read_csv(d.import_csv)
 
-                if m.name !=  'dark': # dark is data-augmented if not predefined
-                    self.assert_same_size(csv, csv_import, m)
+                if d.name !=  'dark': # dark is data-augmented if not predefined
+                    self.assert_same_size(csv, csv_import, d)
                 else:
                     self.assertGreater(len(csv), 0)
-                self.compare_content(csv, csv_import, m, equality=False)
+                self.compare_content(csv, csv_import, d, equality=False)
 
 
 if __name__ == '__main__':

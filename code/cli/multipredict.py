@@ -3,6 +3,7 @@ import time
 import psutil
 import click
 from utils.db_utils import *
+from utils.logmanager import *
 
 # Parallelize the predictions by calling predict.py multiple times
 
@@ -35,8 +36,8 @@ def determine_tasks_per_db(db_sizes: dict, workload: int,
         # copy because it is being edited in the loop
         for entry in db_sizes.copy():
             if debug:
-                print(db_sizes)
-                print(remaining_tasks)
+                info(db_sizes)
+                info(remaining_tasks)
             # Just consider db entries, not tasks-related ones
             if entry[-1] == 'w': # (if string ending with 'w')
                 continue
@@ -151,12 +152,12 @@ def generate_commands(cmd_single: str, target_size: int, target_tasks: int, work
 
 def log_debug(debug: bool, workers: int, workload: int, db_sizes: dict = None):
     if debug:
-        print(f'Workers  = {workers}')
-        print(f'Workload = {workload}')
+        info(f'Workers  = {workers}')
+        info(f'Workload = {workload}')
 
         if db_sizes is not None:
-            print(f'Assigned work:')
-            print(db_sizes)
+            info(f'Assigned work:')
+            info(db_sizes)
 
 # Credit to https://stackoverflow.com/a/50560686
 def clear_console():
@@ -172,9 +173,9 @@ def run_commands(commands: list, workers: int, debug: bool):
     It also tries to print the status of each alive worker via `tqdm`
     '''
     if debug:
-        print(f'Resulting commands: {len(commands)}')
+        info(f'Resulting commands: {len(commands)}')
         for cmd in commands:
-            print(cmd)
+            info(cmd)
 
     procs_list = []
     alive_procs = 1
@@ -301,19 +302,20 @@ def single_multi(model, predict_, workers, debug):
 
 @cli_multipredict.command(name='batchm', short_help='Multiprocessing on batch predictions (eg. base, cross)')
 @click.option('--type', '-t', type=click.Choice(['base', 'cross', 'all']), required=True)
-@click.option('--skintones/--no-skintones', 'skintones', default=False,
-              help = 'Whether to predict on skintone sub-datasets')
+@click.option('--dataset' , '-d',  multiple=True,
+              type=click.Choice(skin_databases_names(get_models()), case_sensitive=False), required = True,
+              help = 'Datasets to use (eg. -d ECU -d HGR_small -d medium)')
 @click.option('--workers', '-w', type=int, default=-1, help = 'Number of processes, default is auto')
 @click.option('--debug/--no-debug', '-d', 'debug', default=False, help = 'Print more info')
-def batch_multi(type, skintones, workers, debug):
-    models = get_models()
-    if skintones == True:
-        models = skin_databases_skintones
+def batch_multi(type, dataset, workers, debug):
+    models = dataset
     
     # Models list to string list
     models = skin_databases_names(models)
     # Check if the number of workers need to be automatically determined
     workers = determine_workers(workers)
+
+    assert models in get_datasets(), 'Not all selected models do have a dataset folder!'
 
     # Determine commands to run
     if type == 'base':

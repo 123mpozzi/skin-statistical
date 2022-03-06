@@ -10,18 +10,18 @@ def cli_predict():
 
 @cli_predict.command(short_help='N-on-M datasets predictions')
 @click.option('--type', '-t', type=click.Choice(['base', 'cross', 'all']), required=True)
-@click.option('--skintones/--no-skintones', 'skintones', default=False,
-              help = 'Whether to predict on skintone sub-datasets')
-def batch(type, skintones):
+@click.option('--dataset' , '-d',  multiple=True,
+              type=click.Choice(skin_databases_names(get_models()), case_sensitive=False), required = True,
+              help = 'Datasets to use (eg. -d ECU -d HGR_small -d medium)')
+def batch(type, dataset):
     '''
     BATCH: N-on-M datasets predictions
     N are models, M are datasets
     '''
     timestr = get_timestamp()
 
-    models = get_models()
-    if skintones == True:
-        models = skin_databases_skintones
+    models = dataset
+    models = skin_databases_names(models)
 
     if type == 'base':
         base_preds(timestr, models)
@@ -51,6 +51,7 @@ def bench(size, observations):
     # Do multiple observations
     # The predictions will be the same but performance will be logged 5 different times
     for k in range(observations):
+        assert os.path.isdir(ECU_bench().dir), 'Dataset has no directory: ' + ECU_bench().name
         make_predictions(image_paths, get_model_filename(ECU()),
             out_dir.format(k), out_bench=os.path.join(out_dir.format(k), '..', f'bench{k}.txt'))
 
@@ -68,15 +69,17 @@ def single(model, predict_, from_, to, bar):
     if predict_ is None:
         predict_ = model
     
+    target_dataset = get_db_by_name(predict_)
     if predict_ == model:
-        image_paths = get_db_by_name(predict_).get_test_paths() # on same dataset, use test paths
+        image_paths = target_dataset.get_test_paths() # on same dataset, use test paths
     else:
-        image_paths = get_db_by_name(predict_).get_all_paths() # on cross datasets, use all paths
+        image_paths = target_dataset.get_all_paths() # on cross datasets, use all paths
 
     # to=-1 means till dataset end
     if to == -1:
         to = len(image_paths) # end index is not included in python slicing operator
 
+    assert os.path.isdir(target_dataset.dir), 'Dataset has no directory: ' + target_dataset.name
     # Make predictions
     model_name = get_model_filename(get_db_by_name(model))
     out_dir = pred_dir(None, None, name = f'{model}_on_{predict_}')

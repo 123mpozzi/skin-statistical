@@ -129,12 +129,13 @@ def make_predictions(image_paths, in_model, out_dir, out_bench: str = '', pbar_p
 def base_preds(timestr: str, models: list):
     '''
     Base predictions
-    For each dataset: the model is trained on the training set
-    and then predictions are performed on self test set
+    For each dataset: the model trained from the training set is used
+    and predictions are performed on self test set
     '''
     # Load each model
     for in_model in models:
         model_name = get_model_filename(in_model)
+        assert os.path.isdir(in_model.dir), 'Dataset has no directory: ' + in_model.name
 
         # Make predictions
         image_paths = in_model.get_test_paths() # predict on testing set
@@ -144,8 +145,8 @@ def base_preds(timestr: str, models: list):
 def cross_preds(timestr: str, train_databases: list, predict_databases: list = None):
     '''
     Cross predictions
-    For each dataset: the model is trained on the training set
-    and then predictions are performed on all the images of every other datasets
+    For each dataset: the model trained from the training set is used
+    and predictions are performed on all the images of every other datasets
     '''
     if predict_databases is None:
         predict_databases = get_datasets() #train_databases
@@ -160,6 +161,7 @@ def cross_preds(timestr: str, train_databases: list, predict_databases: list = N
             if train_db == predict_db:
                 continue
             
+            assert os.path.isdir(predict_db.dir), 'Dataset has no directory: ' + predict_db.name
             # Make predictions
             image_paths = predict_db.get_all_paths() # predict the whole dataset
             out_dir = pred_dir('cross', timestr, f'{train_db.name}_on_{predict_db.name}')

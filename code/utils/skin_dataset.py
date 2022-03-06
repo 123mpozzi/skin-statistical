@@ -23,6 +23,9 @@ class skin_dataset(object):
         self.not_defined = 'nd'
         self.available_notes = (self.nt_training, self.nt_validation, self.nt_testing, self.not_defined)
         # Paths
+        current_dir = os.getcwd()
+        project_dir = os.path.basename(os.path.abspath(os.path.join(current_dir, '..')))
+        assert project_dir == 'skin-statistical', 'wrong cwd: ' + project_dir
         self.dir = os.path.join('..', 'dataset', self.name)
         self.csv = os.path.join(self.dir, 'data.csv')
 
