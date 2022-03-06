@@ -6,7 +6,6 @@ import math
 
 # Measure the goodness of the classifier by comparing predictions with groundtruths
 
-# TODO: unit tests?
 
 # Prevent zero division
 smooth = 1e-20
@@ -46,7 +45,7 @@ def pd_metrics(gt_dir: str, pred_dir: str, metric_fns: list, threshold: int = 12
             f_name = metric_fn.__name__
             f_argcount = metric_fn.__code__.co_argcount # amount of argument in function definition
 
-            if len(f_name.split('_')) > 1: # is a medium-average metric, must not compute now
+            if f_name.endswith('_medium'): # is a medium-average metric, must not compute now
                 continue
 
             # only one args: the metric only uses confusion matrix scores and is LUT-optimized
@@ -72,6 +71,25 @@ def print_pd_mean(total: list, metric_fns: list, desc: str) -> None:
     ---
     The mean F1 value calculated by summing all experiments F1 and dividing by N elements
     is different than the mean calculated by applying the F1 formula on average REcall and PRecision!
+
+    #### Medium Averaging
+    In the code I call 'medium average' the metrics in which I average only the
+    medium-scores (PRecision, REcall, SPecificity)
+    and in the end I calculate the functions of the 'final' metrics (F1, dprs) using these averages
+
+    'Medium' as in their formulas they use the basic metrics (the ones in a confusion matrix:
+    True Positives, False Negatives, ..), while 'final' metrics
+    use the medium metrics themselves in their formulas.
+
+    By following this logic, 'final' averaging means calculating the final metrics
+    at the first step, along with the medium metrics, for each image and averaging
+    these values on the batch of images.
+
+    In a mathematical way:
+    f1: 2 * precision * recall / (precision + recall)
+    f1_finavg: avg(f1)
+    f1_medavg: 2 * avg(precision) * avg(recall) / (avg(precision) + avg(recall))
+
     '''
     print(f'{desc}')
     res = {}
@@ -81,17 +99,17 @@ def print_pd_mean(total: list, metric_fns: list, desc: str) -> None:
         f_name = metric_fn.__name__
         f_score = -99
 
-        if len(f_name.split('_')) > 1: # is a medium-average metric
+        if f_name.endswith('_medium'): # is a medium-average metric
             medium_avg.append(metric_fn)
             continue
         else:
             f_score = sum(d[f_name] for d in total) / len(total)
             res[f_name] = f_score
     
-    # The 'medium average' metrics average only the medium-scores (PRecision, REcall, SPecificity)
+    # The 'medium average' metrics average only the intermediate-scores (PRecision, REcall, SPecificity)
     # and then calculate the functions of the final metrics
     for metric_fn in medium_avg:
-        f_name = metric_fn.__name__.split('_')[0]
+        f_name = metric_fn.__name__
         f_score = metric_fn(res['precision'], res['recall'], res['specificity'])
         res[f_name] = f_score
     
@@ -130,10 +148,12 @@ def confmat_scores(y_true, y_pred) -> dict:
 
     return data
 
-def ioualt(y_true, y_pred) -> float:
+def iou_logical(y_true, y_pred) -> float:
     '''Intersection over Union'''
     overlap = y_true * y_pred # Logical AND
     union =   y_true + y_pred # Logical OR
+    # Note that matrices are bool due to '> threshold' in load_images(),
+    # it they were not, for union must to use bitwise OR '|'
     
     # Treats "True" as 1, sums number of Trues
     # in overlap and union and divides
@@ -187,8 +207,12 @@ def f2(cs):
     '''F2-score'''
     return fb(cs, 2)
 
-def f1_m(pr, re, sp):
-    '''F1-score (aliases: F1-measure, F-score with Beta=1)'''
+def f1_medium(pr, re, sp):
+    '''
+    F1-score (aliases: F1-measure, F-score with Beta=1)
+    ---
+    Implementation suited for medium averaging
+    '''
     return 2 * ((pr * re) / (pr + re + smooth))
 
 def dprs(cs):
@@ -212,7 +236,7 @@ def dprs(cs):
     
     return math.sqrt(a + b + c)
 
-def dprs_m(pr, re, sp):
+def dprs_medium(pr, re, sp):
     '''
     Measures the Euclidean distance between the segmentation,
     represented by the point (PR, RE, SP), and the ground truth, the ideal point(1, 1, 1),
@@ -226,6 +250,9 @@ def dprs_m(pr, re, sp):
     for Segmentation Algorithms Integrating Precision, Recall and Specificity.
     Computer Analysis of Images and Patterns, 188-195.
     https://doi.org/10.1007/978-3-642-40261-6_22
+
+    ---
+    Implementation suited for medium averaging
     '''
     a = (1 - pr)**2
     b = (1 - re)**2

@@ -5,3 +5,5 @@ dataset
 models/*.csv
 debug.log
 logs
+docs/*.json
+dumps

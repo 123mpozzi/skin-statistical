@@ -14,8 +14,8 @@ This skin detector uses three-dimensional histograms to model the data and proba
 # Outcomes
 Input         							|  Output
 :-------------------------:|:-------------------------:
-![](docs/1ori.jpg)  |  ![](docs/1gt.png)
-![](docs/2ori.jpg)  |  ![](docs/2gt.png)
+![](docs/x/infohiding.jpg)  |  ![](docs/p/infohiding.png)
+![](docs/x/st-vincent-actor-album-art.jpg)  |  ![](docs/p/st-vincent-actor-album-art.png)
 
 >Skin detection: input images from [Pratheepan](http://cs-chan.com/downloads_skin_dataset.html) skin dataset, and detected skin pixels using the ECU model
 

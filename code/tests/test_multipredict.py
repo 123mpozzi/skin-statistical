@@ -1,20 +1,19 @@
 import unittest
 import os
-from code.utils.db_utils import gen_pred_folders
+from code.utils.db_utils import get_datasets
+from utils.db_utils import gen_pred_folders
 from utils.db_utils import get_db_by_name
-from utils.skin_dataset import skin_dataset
 from utils.db_utils import skin_databases, get_models
 from utils.hash_utils import hash_dir
 from cli.multipredict import single_multi, batch_multi
 from click.testing import CliRunner
 from predict import predictions_dir
-from tests.helper import set_working_dir
-from utils.ECU import ECU
-from utils.Schmugge import medium, light
+from tests.helper import set_working_dir, search_subdir
 from utils.logmanager import *
 
 
 class TestMultipredict(unittest.TestCase):
+    '''Functional testing for multipredict commands'''
 
     # xxh3_64 hashes of prediction folders already generated for thesis
     hashes = {
@@ -43,21 +42,14 @@ class TestMultipredict(unittest.TestCase):
     }
 
     def check_predictions_folders(self, predictions: list):
+        '''
+        Resulting predictions have same hashes as the ones registered in the thesis,
+        for datasets featured in it
+
+        Prediction images are the same number as in the csv file
+        '''
         for pred in predictions:
-            match = None
-            # Fetch most recent prediction folder with the same name as pred
-            for root, subdirs, files in os.walk(os.path.abspath(predictions_dir)):
-                for d in subdirs:
-                    if d == pred:
-                        d_abs = os.path.join(root, d)
-                        if match is None:
-                            match = d_abs
-                            info('Prediction folder match found: ' + match)
-                        else:
-                            # get the latest modified folder
-                            if os.path.getmtime(d_abs) > os.path.getmtime(match):
-                                match = d_abs
-                                info('Prediction folder match updated: ' + match)
+            match = search_subdir(predictions_dir, pred)
             # Assert predictions folder exists
             self.assertIsNotNone(match, f'No match found for prediction folder named {pred}')
 
@@ -84,7 +76,7 @@ class TestMultipredict(unittest.TestCase):
         '''
         Command run without errors
 
-        Resulting predictions have same hashes as the one registered in the thesis,
+        Resulting predictions have same hashes as the ones registered in the thesis,
         for datasets featured in it.
 
         Prediction images are the same number as in the csv file
@@ -102,7 +94,6 @@ class TestMultipredict(unittest.TestCase):
 
         info('TESTING COMMANDS...')
         for m in get_models(): # get models
-            # save runned prediction in the list
             # run command
             result = runner.invoke(batch_multi, ['-t', 'all'].extend(datasets_args))
             # Command has no errors on run
@@ -110,45 +101,7 @@ class TestMultipredict(unittest.TestCase):
                 f'Error running the command with "-t all {" ".join(datasets_args)}"\nResult: {result}')
         
         info('TESTING RESULTING PREDICTIONS...')
-        for pred in predictions:
-            match = None
-            # Fetch most recent prediction folder with the same name as pred
-            for root, subdirs, files in os.walk(os.path.abspath(predictions_dir)):
-                for d in subdirs:
-                    if d == pred:
-                        d_abs = os.path.join(root, d)
-                        if match is None:
-                            match = d_abs
-                            info('Prediction folder match found: ' + match)
-                        else:
-                            # get the latest modified folder
-                            if os.path.getmtime(d_abs) > os.path.getmtime(match):
-                                match = d_abs
-                                info('Prediction folder match updated: ' + match)
-            # Assert predictions folder exists
-            self.assertIsNotNone(match, f'No match found for prediction folder named {pred}')
-
-            # for datasets featured in thesis
-            if pred in self.hashes:
-                match_hash = hash_dir(match)
-                # Resulting predictions have same hashes
-                self.assertEqual(match_hash, self.hashes[pred])
-                info('Hash corresponding for ' + pred)
-            
-            #  Predictions folder it has same number of files as defined in csv
-            target = pred.split('_on_')[1]
-            target = get_db_by_name(target)
-            # base pred or cross pred (count test paths or all paths) ?
-            base_pred = True if pred.split('_on_')[1] == pred.split('_on_')[0] else False
-            images_to_predict = len(target.get_all_paths())
-            if base_pred:
-                images_to_predict = len(target.get_test_paths())
-            images_predicted = len(os.listdir(os.path.join(match, 'p'))) # images in prediction dir
-            self.assertEqual(images_predicted, images_to_predict,
-                f'Number of images predicted != number of images to predict: {images_predicted} != {images_to_predict}')
-    
-    def test_batchm_skintones(self):
-        pass
+        self.check_predictions_folders(predictions)
 
     def test_singlem(self):
         '''
@@ -166,52 +119,18 @@ class TestMultipredict(unittest.TestCase):
         predictions = []
         info('TESTING COMMANDS...')
         for m in get_models(): # get models
-            for p in skin_databases: # get targets
+            for p in get_datasets(): # get targets 
                 # save runned prediction in the list
-                predictions.append(f'{m.name}_on_{p.name}')
+                predictions.append(f'{m.name}_on_{p.name}') # TODO: debug: print just command list! or this list!
                 # run command
                 result = runner.invoke(single_multi, ['-m', m.name, '-p', p.name])
                 # Command has no errors on run
                 self.assertEqual(result.exit_code, 0,
                     f'Error running the command with "-m {m.name} -p {p.name}"\nResult: {result}')
+        print(predictions)
         
         info('TESTING RESULTING PREDICTIONS...')
-        for pred in predictions:
-            match = None
-            # Fetch most recent prediction folder with the same name as pred
-            for root, subdirs, files in os.walk(os.path.abspath(predictions_dir)):
-                for d in subdirs:
-                    if d == pred:
-                        d_abs = os.path.join(root, d)
-                        if match is None:
-                            match = d_abs
-                            info('Prediction folder match found: ' + match)
-                        else:
-                            # get the latest modified folder
-                            if os.path.getmtime(d_abs) > os.path.getmtime(match):
-                                match = d_abs
-                                info('Prediction folder match updated: ' + match)
-            # Assert predictions folder exists
-            self.assertIsNotNone(match, f'No match found for prediction folder named {pred}')
-
-            # for datasets featured in thesis
-            if pred in self.hashes:
-                match_hash = hash_dir(match)
-                # Resulting predictions have same hashes
-                self.assertEqual(match_hash, self.hashes[pred])
-                info('Hash corresponding for ' + pred)
-            
-            #  Predictions folder it has same number of files as defined in csv
-            target = pred.split('_on_')[1]
-            target = get_db_by_name(target)
-            # base pred or cross pred (count test paths or all paths) ?
-            base_pred = True if pred.split('_on_')[1] == pred.split('_on_')[0] else False
-            images_to_predict = len(target.get_all_paths())
-            if base_pred:
-                images_to_predict = len(target.get_test_paths())
-            images_predicted = len(os.listdir(os.path.join(match, 'p'))) # images in prediction dir
-            self.assertEqual(images_predicted, images_to_predict,
-                f'Number of images predicted != number of images to predict: {images_predicted} != {images_to_predict}')
+        self.check_predictions_folders(predictions)
 
 
 if __name__ == '__main__':

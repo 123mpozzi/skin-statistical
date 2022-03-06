@@ -9,6 +9,7 @@ from utils.logmanager import *
 
 
 class TestReset(unittest.TestCase):
+    '''Functional testing for manage commands'''
 
     def assert_same_size(self, csv: list, csv_import: list, m: skin_dataset):
         if m.name in skin_databases_names(skin_databases_skintones):

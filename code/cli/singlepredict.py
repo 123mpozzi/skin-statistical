@@ -25,14 +25,11 @@ def batch(type, dataset):
 
     if type == 'base':
         base_preds(timestr, models)
-        pass
     elif type == 'cross':
         cross_preds(timestr, models)
-        pass
     else: # 'all' does either base+cross or skinbase+skincross, depending on --skintone
         base_preds(timestr, models)
         cross_preds(timestr, models)
-        pass
 
 @cli_predict.command(short_help='Measure inference time')
 @click.option('--size', '-s', type=int, default = 15, show_default=True,

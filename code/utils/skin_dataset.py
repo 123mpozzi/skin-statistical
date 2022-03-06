@@ -146,14 +146,6 @@ class skin_dataset(object):
         testing = file_list[split_index:]
         return training, testing
 
-    # TODO: !!! (also in Schmugge I think -> everywhere import_csv is imported you must not use copyfile
-    # but rescan csv, find corresponding filenames [use the function -> get_variable_filename ?]
-    # and update the paths (eg: ../dataset))
-    #
-    # * do not directly copy import_csv into self.csv
-    # as paths may be updated (eg with ../dataset)
-    # -> rescan csv
-
     def import_configuration(self, force: bool = False):
         '''Check if `self.csv` file exists: if not, try to import it from `self.import_csv`'''
         if self.import_csv is None:

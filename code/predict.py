@@ -8,7 +8,6 @@ from utils.hash_utils import hash_dir
 from utils.db_utils import get_model_filename, get_datasets
 from utils.logmanager import *
 
-# TODO: clean root folder: leave only README, train,predict,metrics,gitignore,requirements
 
 method_name = 'probabilistic'
 predictions_dir = os.path.join('..', 'predictions')

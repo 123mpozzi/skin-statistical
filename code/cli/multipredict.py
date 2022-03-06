@@ -309,8 +309,6 @@ def single_multi(model, predict_, workers, debug):
 @click.option('--debug/--no-debug', '-d', 'debug', default=False, help = 'Print more info')
 def batch_multi(type, dataset, workers, debug):
     models = dataset
-    
-    # Models list to string list
     models = skin_databases_names(models)
     # Check if the number of workers need to be automatically determined
     workers = determine_workers(workers)
@@ -325,7 +323,6 @@ def batch_multi(type, dataset, workers, debug):
     else: # 'all' does either base+cross or skinbase+skincross, depending on --skintone
         commands = gen_base_cmds(models, workers, debug=debug)
         commands.extend(gen_cross_cmds(models, workers, debug=debug))
-        pass
 
     # start processes and do not wait
     run_commands(commands, workers, debug)
