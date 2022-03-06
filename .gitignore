@@ -4,3 +4,4 @@ venv
 dataset
 models/*.csv
 debug.log
+logs

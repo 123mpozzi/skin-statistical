@@ -6,7 +6,7 @@ import os, time
 from shutil import copyfile
 from utils.hash_utils import hash_dir
 from utils.db_utils import get_model_filename, get_datasets
-from logging import info, error, critical
+from utils.logmanager import *
 
 # TODO: clean root folder: leave only README, train,predict,metrics,gitignore,requirements
 

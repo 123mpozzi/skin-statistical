@@ -7,7 +7,7 @@ import cv2
 import imghdr
 from tqdm import tqdm
 from shutil import copyfile
-from logging import critical, info, error, warning, debug
+from utils.logmanager import *
 
 
 class skin_dataset(object):

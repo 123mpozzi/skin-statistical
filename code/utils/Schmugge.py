@@ -7,7 +7,7 @@ from tqdm import tqdm
 import albumentations as aug
 import numpy as np
 from math import floor
-from logging import info, error, critical
+from utils.logmanager import *
 
 
 class Schmugge(skin_dataset, metaclass=SingletonMeta):

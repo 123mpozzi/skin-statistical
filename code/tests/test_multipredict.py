@@ -7,7 +7,9 @@ from utils.hash_utils import hash_dir
 from cli.multipredict import single_multi, batch_multi
 from click.testing import CliRunner
 from predict import predictions_dir
-from helper import set_working_dir
+from tests.helper import set_working_dir
+from utils.ECU import ECU
+from utils.HGR import HGR
 
 class TestMultipredict(unittest.TestCase):
 
@@ -69,13 +71,15 @@ class TestMultipredict(unittest.TestCase):
 
         predictions = []
         print('TESTING COMMANDS...')
-        for m in get_models(): # get models
+        for m in [ECU()]:
+        #for m in get_models(): # get models
             print(m.name)
-            for p in skin_databases: # get targets
+            for p in [HGR()]:
+            #for p in skin_databases: # get targets
                 # save runned prediction in the list
                 predictions.append(f'{m.name}_on_{p.name}')
                 # run command
-                result = runner.invoke(single_multi, ['-m' + m.name, '-p' + p.name])
+                result = runner.invoke(single_multi, ['-m', m.name, '-p', p.name])
                 print(result)
                 # Command has no errors on run
                 self.assertEqual(result.exit_code, 0,
