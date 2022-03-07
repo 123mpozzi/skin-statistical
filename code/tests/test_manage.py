@@ -1,11 +1,14 @@
 import unittest
-from utils.skin_dataset import skin_dataset
-from utils.db_utils import skin_databases, skin_databases_names, skin_databases_skintones
-from utils.Schmugge import count_skintones
+
 from cli.manage import reset
 from click.testing import CliRunner
-from tests.helper import set_working_dir
+from utils.db_utils import (skin_databases, skin_databases_names,
+                            skin_databases_skintones)
 from utils.logmanager import *
+from utils.Schmugge import count_skintones
+from utils.skin_dataset import skin_dataset
+
+from tests.helper import set_working_dir
 
 
 class TestReset(unittest.TestCase):

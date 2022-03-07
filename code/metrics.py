@@ -1,8 +1,9 @@
-import os
-import numpy as np
-from tqdm import tqdm
-from PIL import Image
 import math
+import os
+
+import numpy as np
+from PIL import Image
+from tqdm import tqdm
 
 # Measure the goodness of the classifier by comparing predictions with groundtruths
 

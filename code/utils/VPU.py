@@ -1,5 +1,6 @@
 import os
-from utils.skin_dataset import skin_dataset, SingletonMeta
+
+from utils.skin_dataset import SingletonMeta, skin_dataset
 
 
 class VPU(skin_dataset, metaclass=SingletonMeta):

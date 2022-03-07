@@ -1,7 +1,7 @@
-import unittest
 import os
-from utils.logmanager import *
+import unittest
 
+from utils.logmanager import *
 
 code_dir = 'code'
 

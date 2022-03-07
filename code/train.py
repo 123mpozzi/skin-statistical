@@ -1,145 +1,84 @@
-import os, sys
-from PIL import Image
-import numpy as np
 import csv
-from utils import get_train_paths
+import os
+import numpy as np
 from tqdm import tqdm
 
+from predict import open_image
+from utils.logmanager import *
 
-# TODO: save as sparse matrix? https://stackoverflow.com/a/8980156 Or in Future Improvements?
-
-# TODO: fix, refactor
-
-
-##src- path of image file
-def open_image(src): 
-    return Image.open(src,'r')
+# FUTURE improvement ideas
+# -use sparse matrix for saving model
+# -use numpy to avoid the 3d histogram nested loops in data()
+# -use cv2 to read images, should be faster
 
 
 ## this function reads image and get RGB data
-def read_image(im):
-    im = im.convert('RGB')      ##converts single value to rgb
-    return list(im.getdata())   ##listing all rgb into a list
-  
+def read_image(path: str):
+    '''Return a sequential list of R,G,B values representing an image'''
+    im = open_image(path)
+    im_data = im.getdata()
+    im.close()
+    return list(im_data) # listing all rgb into a list
 
-def check_skin(rgb):
-    r = rgb[0]  
-    g = rgb[1]
-    b = rgb[2]
-    if (r <= 150 and g <= 150 and b <= 150): return False # check the rgb combination is greater skin or not
-    return True
+def is_skin(rgb, threshold: int = 150):
+    '''Grountruth pixel is skin if it is whiteish'''
+    r, g, b = rgb
+    return r > threshold and g > threshold and b > threshold
 
-def train_data(pixels, pix_val_actual, pix_val_mask, skin, non_skin):
-        
-    for i in range(len(pix_val_actual)):
-        
-        r = pix_val_actual[i][0]
-        g = pix_val_actual[i][1]
-        b = pix_val_actual[i][2]
+def train_data(im_data, y_data, skin, non_skin):
+    '''Add more data to the 3-dimensional histograms'''
+    for i in range(len(im_data)):
+        r, g, b = im_data[i]
 
-        if(check_skin(pix_val_mask[i])):
-            skin[r][g][b] += 1    #incrementing skin value(default = 0) of that rgb combination.. like, skin[10][20][30] += 1 
-      
+        if is_skin(y_data[i]):
+            # incrementing skin value(default = 0) of current rgb combination
+            skin[r][g][b] += 1
         else:
-            non_skin[r][g][b] += 1 #incrementing non_skin value(default = 0) of that rgb combination.. like, non_skin[10][20][30] += 1
+            # incrementing non_skin value(default = 0) of current rgb combination
+            non_skin[r][g][b] += 1
        
-    return pixels, skin, non_skin                  
+    return skin, non_skin
  
-def set_probability(pixel, skin, non_skin, probability):
-    probability = list(skin / (non_skin + skin))    #ex: probability[10][20][30] = skin[10][20][30]/(skin[10][20][30] + non_skin[10][20][30])
-    return probability
-
-
-def to_list(r,g,b,probability):
-    a = []
-    a.append(r)
-    a.append(g)
-    a.append(b)
-    a.append(probability)
-    return list(a)
+def calc_probability(skin, non_skin):
+    '''Probability function'''
+    # ex: probability[10][20][30] = skin[10][20][30]/(skin[10][20][30] + non_skin[10][20][30])
+    return list(skin / (non_skin + skin))
 
 def data(probability):  ## just a function to make list of rgb and prob
+    '''Return a list of tuples (R,G,B,p) where p is the probability assigned to the RGB triplet'''
     arr = []
     
-    #for r in range(256):
     for r in tqdm(range(256)):
         for g in range(256):
             for b in range(256):
-                arr.append(to_list(r,g,b,probability[r][g][b]))
-                 
-        
-    return arr     
+                arr.append((r, g, b, probability[r][g][b])) # Nan on CSV if probability is None
+    
+    return arr
 
-
-def create_csv(probability, filename): ##this function creats csv 
+def create_csv(probability, filename):
+    '''Create model CSV file'''
     myFile = open(filename, 'w', newline = '')
     with myFile:  
         writer = csv.writer(myFile)
         writer.writerow(["Red", "Green", "Blue", "Probability"])
         writer.writerows(data(probability))
-    print('Training Completed')
+    info('Training Completed')
 
-
-def main(image_paths, out):
-
-    pixels = np.zeros((256,256,256))
+def do_training(image_paths, out):
+    # 3D histograms which represent training data
     skin = np.zeros((256,256,256)) 
     non_skin = np.zeros((256,256,256))    
-    probability = np.zeros((256,256,256))
-
-    #files_actual = os.listdir('image')      #all filenames of that particular dir -- image
-    #files_mask = os.listdir('mask')         #all filenames of that particular dir -- mask
     
-    print('Reading training files...')
-
-    #for i in range(len(files_actual)): ##iterating through all images
+    info('Reading training images...')
     for i in tqdm(image_paths):
-        im_abspath = os.path.abspath(i[0]) 
+        im_abspath = os.path.abspath(i[0])
         y_abspath = os.path.abspath(i[1])
-       
-        #image_actual_path = 'image\\'
-        #image_mask_path = 'mask\\'
 
-        #pix_val_actual = read_image(open_image(image_actual_path+files_actual[i])) ## storing the pixels of actual picture..
-        #pix_val_mask = read_image(open_image(image_mask_path+files_mask[i])) ## storing the pixels of mask picture..
-        pix_val_actual = read_image(open_image(im_abspath))
-        pix_val_mask = read_image(open_image(y_abspath))
+        im = read_image(im_abspath) # storing the pixels of actual picture..
+        y = read_image(y_abspath) # storing the pixels of mask picture..
+        skin, non_skin = train_data(im, y, skin, non_skin)
+    
+    probability = calc_probability(skin, non_skin)
 
-        #print(image_actual_path+files_actual[i], image_mask_path+files_mask[i])
-        
-        pixels, skin, non_skin = train_data(pixels, pix_val_actual, pix_val_mask, skin, non_skin) ## this returns the skin value and non_skin value 
-#        
-    probability = set_probability(pixels, skin, non_skin, probability) ## this returns the probability
-
-    print('Saving training data...')
-    create_csv(probability, out) ## creating CSV from that probabilty and rgb
-
-
-if __name__ == "__main__":
-    # total arguments
-    n = len(sys.argv)
-
-    if n != 2:
-        exit('''There must be 1 argument!
-        Usage: python train.py <db-name>
-        Available DB values:\tSchmugge, ECU, HGR''')
-
-    dataset = sys.argv[1]
-
-    if dataset == 'HGR':
-        dataset = 'HGR_small'
-    elif dataset in ('light', 'medium', 'dark'):
-        name_in = 'Schmugge'
-        name_out = dataset
-    else:
-        name_in = dataset
-        name_out = dataset
-
-    in_dir = f'./dataset/{name_in}'
-    out = f'./models/{name_out}.csv'
-    #in_dir = f'./dataset/{dataset}'
-    #out = f'./{dataset}.csv'
-
-    image_paths = get_train_paths(os.path.join(in_dir, 'data.csv'))
-
-    main(image_paths, out)
+    info('Saving training data...')
+    create_csv(probability, out) # creating CSV from that probabilty and rgb

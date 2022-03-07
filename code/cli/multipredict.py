@@ -1,7 +1,8 @@
 import subprocess
 import time
-import psutil
+
 import click
+import psutil
 from utils.db_utils import *
 from utils.logmanager import *
 

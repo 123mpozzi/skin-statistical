@@ -1,13 +1,15 @@
+import os
+import time
 import traceback
-from PIL import Image
-import pandas as pd
-from tqdm import tqdm
-import os, time
 from shutil import copyfile
-from utils.hash_utils import hash_dir
-from utils.db_utils import get_model_filename, get_datasets
-from utils.logmanager import *
 
+import pandas as pd
+from PIL import Image
+from tqdm import tqdm
+
+from utils.db_utils import get_datasets, get_model_filename
+from utils.hash_utils import hash_dir
+from utils.logmanager import *
 
 method_name = 'probabilistic'
 predictions_dir = os.path.join('..', 'predictions')
@@ -79,7 +81,7 @@ def create_image(im: Image, probability, out_p) -> float:
     
     for r,g,b in im.getdata():
         row_num = (r*256*256) + (g*256) + b # calculating the serial row number 
-        if(probability['Probability'][row_num] <0.555555):
+        if probability['Probability'][row_num] < 0.555555:
             newimdata.append((0,0,0))
         else:
             newimdata.append((255,255,255))

@@ -1,4 +1,5 @@
 from pathlib import Path
+
 import xxhash
 
 
@@ -17,7 +18,7 @@ def hash_update_from_dir(directory, hash):
 
 def hash_dir(directory: str) -> str:
     '''
-    Return a hash digest representing the directory
+    Return a hash hexdigest representing the directory
 
     Hash changes if filenames, filecontent, or number of files changes
     
@@ -25,3 +26,11 @@ def hash_dir(directory: str) -> str:
     '''
     hash = xxhash.xxh3_64()
     return hash_update_from_dir(directory, hash).hexdigest()
+
+def hash_file(path: str) -> str:
+    '''Return a hash hexdigest representing a file. Filename is not considered'''
+    hash = xxhash.xxh3_64()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(8192), b""):
+            hash.update(chunk)
+    return hash.hexdigest()

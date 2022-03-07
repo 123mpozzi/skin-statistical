@@ -1,45 +1,45 @@
-import unittest
 import os
+import unittest
 from code.utils.db_utils import get_datasets
-from utils.db_utils import gen_pred_folders
-from utils.db_utils import get_db_by_name
-from utils.db_utils import skin_databases, get_models
-from utils.hash_utils import hash_dir
-from cli.multipredict import single_multi, batch_multi
+
+from cli.multipredict import batch_multi, single_multi
 from click.testing import CliRunner
 from predict import predictions_dir
-from tests.helper import set_working_dir, search_subdir
+from utils.db_utils import gen_pred_folders, get_db_by_name, get_models
+from utils.hash_utils import hash_dir
 from utils.logmanager import *
 
+from tests.helper import search_subdir, set_working_dir
+
+# xxh3_64 hashes of prediction folders already generated for thesis
+hashes = {
+    # base
+    'ECU_on_ECU' : 'e1dc03ee2bfbb903',
+    'HGR_small_on_HGR_small' : '40752ebb0f0b4410',
+    'Schmugge_on_Schmugge' : '860c1665a6a03c70',
+    # cross
+    'ECU_on_HGR_small' : 'eb81f2ba89db8b4d',
+    'ECU_on_Schmugge' : '51f8f444f55e0b9f',
+    'HGR_small_on_ECU' : '867b75fc6913665e',
+    'HGR_small_on_Schmugge' : '91c2e16def9c552c',
+    'Schmugge_on_ECU' : 'd35c57d06d621c06',
+    'Schmugge_on_HGR_small' : 'f81c14afc0cf244e',
+    # skintone base
+    'dark_on_dark' : 'f1db4259767f19ed',
+    'light_on_light' : 'adb974e9c9a49eb9',
+    'medium_on_medium' : 'bf0d93cbc416c526',
+    # skintone cross
+    'dark_on_light' : '2452c528faa840eb',
+    'dark_on_medium' : 'b3210cceb89379b1',
+    'light_on_dark' : 'bf4eb7bfdefa3a37',
+    'light_on_medium' : '1524f657dd4df6bc',
+    'medium_on_dark' : 'a07c9a2c17242f7e',
+    'medium_on_light' : 'b4cdb5d3a861b341'
+}
 
 class TestMultipredict(unittest.TestCase):
     '''Functional testing for multipredict commands'''
 
-    # xxh3_64 hashes of prediction folders already generated for thesis
-    hashes = {
-        # base
-        'ECU_on_ECU' : 'e1dc03ee2bfbb903',
-        'HGR_small_on_HGR_small' : '40752ebb0f0b4410',
-        'Schmugge_on_Schmugge' : '860c1665a6a03c70',
-        # cross
-        'ECU_on_HGR_small' : 'eb81f2ba89db8b4d',
-        'ECU_on_Schmugge' : '51f8f444f55e0b9f',
-        'HGR_small_on_ECU' : '867b75fc6913665e',
-        'HGR_small_on_Schmugge' : '91c2e16def9c552c',
-        'Schmugge_on_ECU' : 'd35c57d06d621c06',
-        'Schmugge_on_HGR_small' : 'f81c14afc0cf244e',
-        # skintone base
-        'dark_on_dark' : 'f1db4259767f19ed',
-        'light_on_light' : 'adb974e9c9a49eb9',
-        'medium_on_medium' : 'bf0d93cbc416c526',
-        # skintone cross
-        'dark_on_light' : '2452c528faa840eb',
-        'dark_on_medium' : 'b3210cceb89379b1',
-        'light_on_dark' : 'bf4eb7bfdefa3a37',
-        'light_on_medium' : '1524f657dd4df6bc',
-        'medium_on_dark' : 'a07c9a2c17242f7e',
-        'medium_on_light' : 'b4cdb5d3a861b341'
-    }
 
     def check_predictions_folders(self, predictions: list):
         '''
@@ -54,10 +54,10 @@ class TestMultipredict(unittest.TestCase):
             self.assertIsNotNone(match, f'No match found for prediction folder named {pred}')
 
             # for datasets featured in thesis
-            if pred in self.hashes:
+            if pred in hashes:
                 match_hash = hash_dir(match)
                 # Resulting predictions have same hashes
-                self.assertEqual(match_hash, self.hashes[pred])
+                self.assertEqual(match_hash, hashes[pred])
                 info('Hash corresponding for ' + pred)
             
             #  Predictions folder it has same number of files as defined in csv

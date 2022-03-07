@@ -1,12 +1,12 @@
 import click
-from utils.db_utils import skin_databases_names, get_db_by_name
+from utils.db_utils import get_db_by_name, skin_databases_names
 
 
 @click.group()
-def manage():
+def cli_manage():
     pass
 
-@manage.command(short_help='Reset CSV files of datasets by reprocessing them')
+@cli_manage.command(short_help='Reset CSV files of datasets by reprocessing them')
 @click.option('--dataset', '-d', type=click.Choice(skin_databases_names(), case_sensitive=False), required=True)
 @click.option('--predefined/--no-predefined', '-p', 'predefined', default=False,
               help = 'Whether to generate a new data csv or import thesis configuration')

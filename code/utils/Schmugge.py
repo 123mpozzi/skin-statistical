@@ -1,13 +1,15 @@
-from utils.skin_dataset import skin_dataset, SingletonMeta
 import os
 import traceback
-from random import shuffle
-import cv2
-from tqdm import tqdm
-import albumentations as aug
-import numpy as np
 from math import floor
+from random import shuffle
+
+import albumentations as aug
+import cv2
+import numpy as np
+from tqdm import tqdm
+
 from utils.logmanager import *
+from utils.skin_dataset import SingletonMeta, skin_dataset
 
 
 class Schmugge(skin_dataset, metaclass=SingletonMeta):

@@ -1,7 +1,8 @@
+import json
+
 import click
 from metrics import *
 from utils.hash_utils import hash_dir
-import json
 
 # TODO: validation() --
 
@@ -10,10 +11,10 @@ dump_dir = os.path.join('..', 'dumps')
 dump_filename = os.path.join(dump_dir, 'metrics_{}_{}.json')
 
 @click.group()
-def measure():
+def cli_measure():
     pass
 
-@measure.command(short_help='Evaluate skin detector performance')
+@cli_measure.command(short_help='Evaluate skin detector performance')
 @click.option('--path', '-p',
               type=click.Path(exists=True), required=True,
               help = 'Path to the folder containing the predictions dir (eg. ECU_on_Schmugge)')

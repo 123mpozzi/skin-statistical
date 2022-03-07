@@ -1,5 +1,6 @@
 import click
-from predict import make_predictions, get_timestamp, base_preds, cross_preds, pred_dir
+from predict import (base_preds, cross_preds, get_timestamp, make_predictions,
+                     pred_dir)
 from utils.db_utils import *
 from utils.ECU import ECU, ECU_bench
 

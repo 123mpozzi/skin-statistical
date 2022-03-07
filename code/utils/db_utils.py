@@ -1,13 +1,13 @@
-from utils.skin_dataset import skin_dataset
-from utils.ECU import ECU
-from utils.Schmugge import Schmugge, dark, medium, light
-from utils.HGR import HGR
-from utils.VPU import VPU
-from utils.UChile import UChile
-from utils.abd import abd
-from utils.Pratheepan import Pratheepan
 import os
 
+from utils.abd import abd
+from utils.ECU import ECU
+from utils.HGR import HGR
+from utils.Pratheepan import Pratheepan
+from utils.Schmugge import Schmugge, dark, light, medium
+from utils.skin_dataset import skin_dataset
+from utils.UChile import UChile
+from utils.VPU import VPU
 
 # NOTE: method-specific (probabilistic)
 models_dir = os.path.join('..', 'models')
@@ -30,6 +30,11 @@ def get_db_by_name(name: str) -> skin_dataset:
 
 def skin_databases_names(db_list: list = skin_databases) -> list:
     return [x.name for x in db_list]
+
+def get_trainable() -> list:
+    '''Return the list of datasets with already defined splits'''
+    result = [x for x in skin_databases if len(x.get_train_paths()) > 0]
+    return result
 
 def get_models() -> list:
     '''Return the list of skin datasets having a trained model file'''

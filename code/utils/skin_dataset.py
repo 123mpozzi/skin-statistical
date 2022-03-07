@@ -1,12 +1,14 @@
+import imghdr
 import os
 import re
 import traceback
 from math import floor
 from random import shuffle
-import cv2
-import imghdr
-from tqdm import tqdm
 from shutil import copyfile
+
+import cv2
+from tqdm import tqdm
+
 from utils.logmanager import *
 
 
@@ -125,7 +127,7 @@ class skin_dataset(object):
 
     def get_train_paths(self) -> list:
         '''Filter CSV dataset file to get only the TRAINING+VALIDATION split lines'''
-        return self.match_paths((self.nt_training, self.nt_validation), 2) # TODO: test
+        return self.match_paths((self.nt_training, self.nt_validation), 2)
 
     def get_val_paths(self) -> list:
         '''Filter CSV dataset file to get only the VALIDATION split lines'''

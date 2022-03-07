@@ -1,12 +1,13 @@
-import unittest
-from cli.measure import eval, dump_dir
-from click.testing import CliRunner
-from tests.helper import set_working_dir
-from utils.logmanager import *
-from metrics import *
 import json
-import numpy as np
+import unittest
 
+import numpy as np
+from cli.measure import dump_dir, eval
+from click.testing import CliRunner
+from metrics import *
+from utils.logmanager import *
+
+from tests.helper import set_working_dir
 
 docs_dir = os.path.join('..', 'docs')
 docs_y_path = os.path.join(docs_dir, 'y')
