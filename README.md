@@ -22,44 +22,57 @@ Input         							|  Output
 As can be seen in the second row, a probabilistic approach may have issues predicting on materials with skin-like colors, and on skin color values not featured in the training dataset, which may be a result of lighting.
 
 # Skin detection algorithm
-	1. First of all, read all the actual images with their corresponding mask pictures.
-	2. Then for every (r, g, b) combination, calculated how many times this particular combination occurs as skin pixel and non_skin pixel.
-	We identified non_skin pixel when the (r<150, g<150, b<150), otherwise skin
-	3. Calculated probabiity for every distinct pixel.
-		Lets say, for a rgb combination like 10, 20, 30
-		It occurs as skin pixel 5 times and non skill pixel as 3 times.
-			so, skin = 5
-				non_skin = 3;
 
-		Now probability of being skin pixel of that particluar rgb combination is (skin) / (skin + non_skin)
-	
-	4. Now for testing, select an unknown image. Read all the pixels of that image.
-	5. If a particular rgb combinations probability of being skin is greater than a certain threshold(we assume it 0.555555)
-	then consider that combination as skin pixel otherwise non_skin pixel. 
+## Training
+
+1. Read all the actual images with their corresponding mask pictures
+2. Construct two 3D histogram models of 256 bins: for every (R,G,B) combination, count how many times that particular combination occurs as skin pixel and non_skin pixel
+3. Calculate probability for every distinct pixel.  
+    Lets say, for a RGB combination like R=10, G=20, B=30, it occurs as skin pixel 5 times and non skin pixel as 3 times, so:  
+
+    skin = 5  
+    non_skin = 3
+
+    Probability of being skin pixel for that particular RGB combination is `skin / (skin + non_skin)`
+
+    probability(10,20,30) = 5 / (5+3) = 0.625
+4. Save the data to a CSV file, with rows in the format: R,G,B,probabilityRGB
+
+## Predicting
+1. Read all the actual images with their corresponding mask pictures
+2. Read the model CSV file
+3. Select an image and read all its pixels
+4. If a particular RGB combinations probability of being skin is greater than a certain threshold (we assume it 0.555555) then consider that combination as skin pixel otherwise non_skin pixel
 
 
 # How to use
-1. Create the folder `dataset` and unzip into it the included databases in `dataset_importfiles` or add yours  
-1. (optional) Prepare skin datasets:  
-`python prepare_dataset.py <db-name>`
-1. (optional) Modify dataset splits by modifying the `data.csv` file present in the dataset root folder
-1. **Train** a model:  
-`python train.py  <db-name>`
-1. **Predict** over a dataset with  
-`python predict.py <db-model> <db-predict>`  
-Example: use Schmugge model to print predictions on ECU test set  
-`python predict.py Schmugge ECU`
-1. (optional) Test metrics:  
-`python metrics.py <db-model> [db-predict]`  
-If the db-predict is not specified, the metrics are measured on db-model itself
+- Create the folder `dataset` in the project root directory and place datasets into it (eg. dataset/Schmugge)  
+- Once added, datasets need processing to create a CSV file representing their images and masks, and splits:  
+`cd code`  
+`python main.py reset -d <db-name>`  
+- **Train** a model:  
+`python main.py train  -d <db-name>`
+- **Predict** over a dataset with  
+`python main.py single -m <db-model> -p <db-predict>`  
+eg. use Schmugge model to print predictions on ECU test set:  
+`python main.py single -m Schmugge -p ECU`  
+- **Predict** in batch mode on target datasets:  
+`python main.py batch -m base -t <db1> -t <db2> -t <db3> ..`  
+`python main.py batch -m cross -t <db1> -t <db2> -t <db3> ..`  
+- **Predict** using multiprocessing:  
+`python main.py singlem -m <db-model> -p <db-predict>`  
+`python main.py batchm -m cross -t <db1> -t <db2> -t <db3> ..`  
+- Measure inference time:  
+`python main.py bench`  
+- Measure metrics:  
+`python main.py eval -p <path-to-predictions-dir>`  
+- See all the available commands and their usage with `--help`:  
+`python main.py --help`  
+`python main.py train --help`  
 
 
-Already prepared datasets: `ECU, HGR_small, Schmugge`  
-To add more datasets, modify the if/else chain at the end of `prepare_dataset.py` and use the same dataset format as the
-supported ones.  
-Scripts to include other common skin datasets are provided and most of them should work, but they have not been tested.  
-  
-Some pre-trained models are provided in the `models` folder. To use a model, unzip it from the folder and place it in the root directory of the project.
+Some pre-trained models are provided into the `models` folder; to use a model, unzip it.  
+Pre-defined dataset splits featured in the thesis are provided into the `dataset` folder; to use a pre-defined file, unzip it to its dataset's directory (eg. place `HGR_data.csv` into `dataset/HGR`).  
 
 # Public datasets supported
 

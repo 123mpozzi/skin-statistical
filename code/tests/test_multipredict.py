@@ -72,7 +72,7 @@ class TestMultipredict(unittest.TestCase):
             self.assertEqual(images_predicted, images_to_predict,
                 f'Number of images predicted != number of images to predict: {images_predicted} != {images_to_predict}')
 
-    def test_batchm(self):
+    def test_batchm(self): # TODO: not working..
         '''
         Command run without errors
 
