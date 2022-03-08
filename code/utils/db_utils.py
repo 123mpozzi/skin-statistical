@@ -56,4 +56,4 @@ def gen_pred_folders(models: list, batch_type: str) -> list:
     elif batch_type == 'cross':
         return cross_folders
     else:
-        return base_folders.extend(cross_folders)
+        return base_folders + cross_folders

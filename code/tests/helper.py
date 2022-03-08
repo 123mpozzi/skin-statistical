@@ -1,4 +1,5 @@
 import os
+import shutil
 import unittest
 
 from utils.logmanager import *
@@ -34,3 +35,8 @@ def search_subdir(root_dir: str, target_name: str) -> str:
                         match = d_abs
                         info('Folder match updated: ' + match)
     return match
+
+
+def rm_folder(folder: str):
+    if os.path.isdir(folder):
+        shutil.rmtree(folder)

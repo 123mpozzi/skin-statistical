@@ -11,11 +11,6 @@ def cli_manage():
 @click.option('--predefined/--no-predefined', '-p', 'predefined', default=False,
               help = 'Whether to generate a new data csv or import thesis configuration')
 def reset(dataset, predefined):
-    if True:
-        trace = get_db_by_name(dataset).reset(predefined=predefined)
-        if trace: # if there are been errors of some kind
-            print(trace)
-    else:
-        for dataset in skin_databases_names():
-            get_db_by_name(dataset).reset()
-
+    trace = get_db_by_name(dataset).reset(predefined=predefined)
+    if trace: # if there are been errors of some kind
+        print(trace)

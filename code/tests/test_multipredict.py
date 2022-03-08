@@ -7,9 +7,9 @@ from predict import predictions_dir
 from utils.db_utils import gen_pred_folders, get_db_by_name, get_models
 from utils.hash_utils import hash_dir
 from utils.logmanager import *
-from utils.Schmugge import medium, light
+from utils.Schmugge import light, medium
 
-from tests.helper import search_subdir, set_working_dir
+from tests.helper import search_subdir, set_working_dir, rm_folder
 
 # xxh3_64 hashes of prediction folders already generated for thesis
 hashes = {
@@ -48,14 +48,22 @@ class TestMultipredict(unittest.TestCase):
 
         Prediction images are the same number as in the csv file
         '''
+        # Check if can find all predictions folders
+        folder_matches = {}
         for pred in predictions:
-            match = search_subdir(predictions_dir, pred)
+            match_ = search_subdir(predictions_dir, pred)
             # Assert predictions folder exists
-            self.assertIsNotNone(match, f'No match found for prediction folder named {pred}')
+            self.assertIsNotNone(match_, f'No match found for prediction folder named {pred}')
+            folder_matches[pred] = match_
 
+        for pred in predictions:
+            match = folder_matches[pred]
+
+            info('Testing for ' + pred)
             # for datasets featured in thesis
             if pred in hashes:
                 match_hash = hash_dir(match)
+                info(f'{match_hash} - {hashes[pred]}')
                 # Resulting predictions have same hashes
                 self.assertEqual(match_hash, hashes[pred])
                 info('Hash corresponding for ' + pred)
@@ -72,7 +80,7 @@ class TestMultipredict(unittest.TestCase):
             self.assertEqual(images_predicted, images_to_predict,
                 f'Number of images predicted != number of images to predict: {images_predicted} != {images_to_predict}')
 
-    def test_batchm(self): # TODO: not working..
+    def test_batchm(self):
         '''
         Command run without errors
 
@@ -85,18 +93,26 @@ class TestMultipredict(unittest.TestCase):
 
         runner = CliRunner()
 
-        predictions = gen_pred_folders(get_models(), 'all')
+        # NOTE: uncomment to test all datasets (long time)
+        #models = get_models()
+        models = [medium(), light()]
+        predictions = gen_pred_folders(models, 'all')
+        info('predictions folder to check for:')
+        for pred in predictions:
+            info(pred)
+            # remove previous predictions
+            rm_folder(os.path.join(predictions_dir, pred))
 
         datasets_args = []
-        # NOTE: uncomment to test all datasets (long time)
-        #for m in get_models():
-        for m in [medium(), light()]: # get models
+        for m in models: # get models
             datasets_args.append('-t')
             datasets_args.append(m.name)
+            # NOTE: reset or else hashes may not be the same if randomized
+            m.reset(predefined=True)
 
-        info('TESTING COMMANDS...')
+        info('TESTING BATCHM COMMAND...')
         # run command
-        result = runner.invoke(batch_multi, ['-m', 'all'].extend(datasets_args))
+        result = runner.invoke(batch_multi, ['-m', 'all'] + datasets_args)
         # Command has no errors on run
         self.assertEqual(result.exit_code, 0,
             f'Error running the command with "-m all {" ".join(datasets_args)}"\nResult: {result}')
@@ -118,20 +134,26 @@ class TestMultipredict(unittest.TestCase):
         runner = CliRunner()
 
         predictions = []
-        info('TESTING COMMANDS...')
+        info('TESTING SINGLEM COMMAND...')
         # NOTE: uncomment to test all datasets (long time)
         #for m in get_models(): # get models
         #    for p in get_datasets(): # get targets
         for m in [medium()]:
             for p in [medium(), light()]:
+                # NOTE: reset or else hashes may not be the same if randomized
+                p.reset(predefined=True)
                 # save runned prediction in the list
-                predictions.append(f'{m.name}_on_{p.name}') # TODO: debug: print just command list, or this list
+                pred_name = f'{m.name}_on_{p.name}'
+                # TODO: debug if using all datasets: print just command list, or this list
+                predictions.append(pred_name)
+                # remove previous predictions
+                rm_folder(os.path.join(predictions_dir, pred_name))
                 # run command
                 result = runner.invoke(single_multi, ['-m', m.name, '-p', p.name])
                 # Command has no errors on run
                 self.assertEqual(result.exit_code, 0,
                     f'Error running the command with "-m {m.name} -p {p.name}"\nResult: {result}')
-        print(predictions)
+        info(predictions)
         
         info('TESTING RESULTING PREDICTIONS...')
         self.check_predictions_folders(predictions)

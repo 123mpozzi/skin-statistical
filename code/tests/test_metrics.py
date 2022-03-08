@@ -163,7 +163,7 @@ class TestMetrics(unittest.TestCase):
         dump_avg = os.path.join(dump_dir, 'metrics_docs_average.json')
         docs_dir = os.path.join('..', 'docs')
 
-        info('TESTING COMMAND...')
+        info('TESTING EVAL COMMAND...')
         result = runner.invoke(eval, ['-p', docs_dir, '-d'])
         # Command has no errors on run
         self.assertEqual(result.exit_code, 0,

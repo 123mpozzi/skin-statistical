@@ -2,10 +2,12 @@ from pathlib import Path
 
 import xxhash
 
+from utils.logmanager import *
+
 
 # Credit to https://stackoverflow.com/a/54477583
 def hash_update_from_dir(directory, hash):
-    assert Path(directory).is_dir()
+    assert Path(directory).is_dir(), f'Argument is not a directory: {directory}'
     for path in sorted(Path(directory).iterdir(), key=lambda p: str(p).lower()):
         hash.update(path.name.encode())
         if path.is_file():

@@ -85,6 +85,8 @@ abd-skin [5]: 1400 abdominal pictures. [Download][abd]
 VPU [6]: 285 human activity recognition images. [Download][vpu]  
 UChile [7]: 101 images obtained from the web and digitized news videos. [Download][uchile]  
 
+To import a dataset, place it into the `dataset` folder and rename its root directory to match its name from the list above. For HGR, the downscaled versions of HGR2A and HGR2B are used, so it is referred to as HGR_small in the program, and so must be its folder.
+
 
 ## Bibliography
 1. >   Phung, S., Bouzerdoum, A., & Chai, D. (2005). Skin segmentation using color pixel

@@ -48,7 +48,7 @@ class TestReset(unittest.TestCase):
 
         runner = CliRunner()
 
-        info('TESTING COMMANDS...')
+        info('TESTING RESET-PREDEFINED COMMAND...')
         for d in skin_databases:
             if d.import_csv is not None: # db has predefined splits
                 result = runner.invoke(reset, ['-d', d.name, '--predefined'])
@@ -79,7 +79,7 @@ class TestReset(unittest.TestCase):
 
         runner = CliRunner()
 
-        info('TESTING COMMANDS...')
+        info('TESTING RESET COMMAND...')
         for d in skin_databases:
             result = runner.invoke(reset, ['-d', d.name])
             # Command has no errors on run

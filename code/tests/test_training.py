@@ -33,7 +33,7 @@ class TestTrain(unittest.TestCase):
 
         runner = CliRunner()
 
-        info('TESTING COMMANDS...')
+        info('TESTING TRAIN COMMAND...')
         # NOTE: uncomment to test all trainable datasets
         #for d in get_trainable():
         for d in [medium()]:
