@@ -34,7 +34,8 @@ class TestTrain(unittest.TestCase):
         runner = CliRunner()
 
         info('TESTING COMMANDS...')
-        #for d in get_trainable(): # uncomment to test all trainable datasets
+        # NOTE: uncomment to test all trainable datasets
+        #for d in get_trainable():
         for d in [medium()]:
             result = runner.invoke(train, ['-d', d.name])
             # Command has no errors on run

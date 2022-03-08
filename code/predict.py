@@ -67,6 +67,7 @@ def predict(probability, path_x, path_y, out_dir, out_bench: str = ''):
             out.write(f'{path_x},{t_elapsed}\n')
 
 # Credit to https://stackoverflow.com/a/36469395 for image management with Pillow
+# FUTURE imrpovement: see train.py, use numpy/cv2
 def create_image(im: Image, probability, out_p) -> float:
     '''
     Infer on an image and save the prediction

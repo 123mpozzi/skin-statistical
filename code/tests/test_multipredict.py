@@ -1,6 +1,5 @@
 import os
 import unittest
-from code.utils.db_utils import get_datasets
 
 from cli.multipredict import batch_multi, single_multi
 from click.testing import CliRunner
@@ -8,6 +7,7 @@ from predict import predictions_dir
 from utils.db_utils import gen_pred_folders, get_db_by_name, get_models
 from utils.hash_utils import hash_dir
 from utils.logmanager import *
+from utils.Schmugge import medium, light
 
 from tests.helper import search_subdir, set_working_dir
 
@@ -88,17 +88,18 @@ class TestMultipredict(unittest.TestCase):
         predictions = gen_pred_folders(get_models(), 'all')
 
         datasets_args = []
-        for m in get_models():
-            datasets_args.append('-d')
+        # NOTE: uncomment to test all datasets (long time)
+        #for m in get_models():
+        for m in [medium(), light()]: # get models
+            datasets_args.append('-t')
             datasets_args.append(m.name)
 
         info('TESTING COMMANDS...')
-        for m in get_models(): # get models
-            # run command
-            result = runner.invoke(batch_multi, ['-t', 'all'].extend(datasets_args))
-            # Command has no errors on run
-            self.assertEqual(result.exit_code, 0,
-                f'Error running the command with "-t all {" ".join(datasets_args)}"\nResult: {result}')
+        # run command
+        result = runner.invoke(batch_multi, ['-m', 'all'].extend(datasets_args))
+        # Command has no errors on run
+        self.assertEqual(result.exit_code, 0,
+            f'Error running the command with "-m all {" ".join(datasets_args)}"\nResult: {result}')
         
         info('TESTING RESULTING PREDICTIONS...')
         self.check_predictions_folders(predictions)
@@ -118,10 +119,13 @@ class TestMultipredict(unittest.TestCase):
 
         predictions = []
         info('TESTING COMMANDS...')
-        for m in get_models(): # get models
-            for p in get_datasets(): # get targets 
+        # NOTE: uncomment to test all datasets (long time)
+        #for m in get_models(): # get models
+        #    for p in get_datasets(): # get targets
+        for m in [medium()]:
+            for p in [medium(), light()]:
                 # save runned prediction in the list
-                predictions.append(f'{m.name}_on_{p.name}') # TODO: debug: print just command list! or this list!
+                predictions.append(f'{m.name}_on_{p.name}') # TODO: debug: print just command list, or this list
                 # run command
                 result = runner.invoke(single_multi, ['-m', m.name, '-p', p.name])
                 # Command has no errors on run

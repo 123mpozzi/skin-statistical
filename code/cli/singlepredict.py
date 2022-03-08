@@ -10,11 +10,11 @@ def cli_predict():
     pass
 
 @cli_predict.command(short_help='N-on-M datasets predictions')
-@click.option('--type', '-t', type=click.Choice(['base', 'cross', 'all']), required=True)
+@click.option('--mode', '-m', type=click.Choice(['base', 'cross', 'all']), required=True)
 @click.option('--dataset' , '-d',  multiple=True,
               type=click.Choice(skin_databases_names(get_models()), case_sensitive=False), required = True,
               help = 'Datasets to use (eg. -d ECU -d HGR_small -d medium)')
-def batch(type, dataset):
+def batch(mode, dataset):
     '''
     BATCH: N-on-M datasets predictions
     N are models, M are datasets
@@ -24,9 +24,9 @@ def batch(type, dataset):
     models = dataset
     models = skin_databases_names(models)
 
-    if type == 'base':
+    if mode == 'base':
         base_preds(timestr, models)
-    elif type == 'cross':
+    elif mode == 'cross':
         cross_preds(timestr, models)
     else: # 'all' does either base+cross or skinbase+skincross, depending on --skintone
         base_preds(timestr, models)

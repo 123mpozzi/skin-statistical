@@ -302,26 +302,25 @@ def single_multi(model, predict_, workers, debug):
     run_commands(commands, workers, debug)
 
 @cli_multipredict.command(name='batchm', short_help='Multiprocessing on batch predictions (eg. base, cross)')
-@click.option('--type', '-t', type=click.Choice(['base', 'cross', 'all']), required=True)
-@click.option('--dataset' , '-d',  multiple=True,
-              type=click.Choice(skin_databases_names(get_models()), case_sensitive=False), required = True,
-              help = 'Datasets to use (eg. -d ECU -d HGR_small -d medium)')
+@click.option('--mode', '-m', type=click.Choice(['base', 'cross', 'all']), required=True)
+@click.option('--target' , '-t',  multiple=True,
+              type=click.Choice(skin_databases_names(get_models()), case_sensitive=False),
+              help = 'Datasets to use (eg. -t ECU -t HGR_small -t medium)')
 @click.option('--workers', '-w', type=int, default=-1, help = 'Number of processes, default is auto')
 @click.option('--debug/--no-debug', '-d', 'debug', default=False, help = 'Print more info')
-def batch_multi(type, dataset, workers, debug):
-    models = dataset
-    models = skin_databases_names(models)
+def batch_multi(mode, target, workers, debug):
+    models = target
+    assert len(models) > 1, 'Select at least 2 datasets!'
     # Check if the number of workers need to be automatically determined
     workers = determine_workers(workers)
 
-    assert models in get_datasets(), 'Not all selected models do have a dataset folder!'
-
     # Determine commands to run
-    if type == 'base':
+    if mode == 'base':
         commands = gen_base_cmds(models, workers, debug=debug)
-    elif type == 'cross':
+    elif mode == 'cross':
         commands = gen_cross_cmds(models, workers, debug=debug)
     else: # 'all' does either base+cross or skinbase+skincross, depending on --skintone
+        print('all')
         commands = gen_base_cmds(models, workers, debug=debug)
         commands.extend(gen_cross_cmds(models, workers, debug=debug))
 
