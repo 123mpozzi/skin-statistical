@@ -1,6 +1,6 @@
 [ecu]: https://documents.uow.edu.au/~phung/download.html "ECU download page"
 [hgr]: http://sun.aei.polsl.pl/~mkawulok/gestures/ "HGR download page"
-[schmugge]: https://www.researchgate.net/publication/ "Schmugge download page"
+[schmugge]: https://www.researchgate.net/publication/257620282_skin_image_Data_set_with_ground_truth "Schmugge download page"
 [pratheepan]: http://cs-chan.com/downloads_skin_dataset.html "Pratheepan download page"
 [abd]: https://github.com/MRE-Lab-UMD/abd-skin-segmentation "abd-skin download page"
 [vpu]: http://www-vpu.eps.uam.es/publications/SkinDetDM/#dataset "VPU download page"
@@ -26,26 +26,24 @@ As can be seen in the second row, a probabilistic approach may have issues predi
 ## Training
 
 1. Read all the actual images with their corresponding mask pictures
-2. Construct two 3D histogram models of 256 bins: for every (R,G,B) combination, count how many times that particular combination occurs as skin pixel and non_skin pixel
+2. Construct two 3D histogram models of 256 bins: for every (R,G,B) combination, count how many times that particular combination occurs as `skin` pixel and `non_skin` pixel
 3. Calculate probability for every distinct pixel.  
-    Lets say, for a RGB combination like R=10, G=20, B=30, it occurs as skin pixel 5 times and non skin pixel as 3 times, so:  
-
-    skin = 5  
-    non_skin = 3
-
-    Probability of being skin pixel for that particular RGB combination is `skin / (skin + non_skin)`
-
-    probability(10,20,30) = 5 / (5+3) = 0.625
-4. Save the data to a CSV file, with rows in the format: R,G,B,probabilityRGB
+    Lets say, for a RGB combination like `R=10, G=20, B=30`, it occurs as skin pixel 5 times and non skin pixel as 3 times, so:  
+    `skin = 5`  
+    `non_skin = 3`  
+    Probability of being skin pixel for that particular RGB combination is `skin / (skin + non_skin)`  
+    `probability(10,20,30) = 5 / (5+3) = 0.625`  
+4. Save the data to a CSV file, with rows in the format: `R,G,B,probabilityRGB`
 
 ## Predicting
+
 1. Read all the actual images with their corresponding mask pictures
 2. Read the model CSV file
 3. Select an image and read all its pixels
 4. If a particular RGB combinations probability of being skin is greater than a certain threshold (we assume it 0.555555) then consider that combination as skin pixel otherwise non_skin pixel
 
-
 # How to use
+
 - Create the folder `dataset` in the project root directory and place datasets into it (eg. dataset/Schmugge)  
 - Once added, datasets need processing to create a CSV file representing their images and masks, and splits:  
 `cd code`  
@@ -82,14 +80,15 @@ Pre-defined dataset splits featured in the thesis are provided into the `dataset
 
 # Public datasets supported
 
-ECU [1]: 3998 pictures, mostly face and half-body shots. [Download (ask the authors)][ecu]  
-HGR [2]: 1558 hand gesture
-    images. [Download][hgr]  
-Schmugge [3]: 845 images, mostly face shots. [Download][schmugge]  
-Pratheepan [4]: 78 pictures randomly sampled from the web. [Download][pratheepan]  
-abd [5]: 1400 abdominal pictures. [Download][abd]  
-VPU [6]: 285 human activity recognition images. [Download][vpu]  
-UChile [7]: 101 images obtained from the web and digitized news videos. [Download][uchile]  
+| Name            |  Description                                               | Download |
+| ---:            | :---:                                                      | :---: |
+| ECU [1]         | 3998 pictures, mostly face and half-body shots             | [Download (ask the authors)][ecu] |
+| HGR [2]         | 1558 hand gesture images                                   | [Download][hgr] |
+| Schmugge [3]    | 845 images, mostly face shots                              | [Download][schmugge] |
+| Pratheepan [4]  | 78 pictures randomly sampled from the web                  | [Download][pratheepan] |
+| abd [5]         | 1400 abdominal pictures                                    | [Download][abd] |
+| VPU [6]         | 285 human activity recognition images                      | [Download][vpu] |
+| UChile [7]      | 101 images obtained from the web and digitized news videos | [Download][uchile] |
 
 To import a dataset, place it into the `dataset` folder and rename its root directory to match its name from the list above. For HGR, the downscaled versions of HGR2A and HGR2B are used, so it is referred to as HGR_small in the program, and so must be its folder.
 
