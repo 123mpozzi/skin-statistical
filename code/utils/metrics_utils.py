@@ -213,6 +213,11 @@ def read_performance(perf_dir: str):
 ## Latex Utils
 
 def print_latex(cross_preds: bool, skintones: bool, db_paths: list):
+    '''
+    Function used to print latex table featured in thesis
+
+    Requires predictions to follow a rigid folder tree structure
+    '''
     if not skintones:
         db_list = ['ecu', 'hgr', 'schmugge']
     else:

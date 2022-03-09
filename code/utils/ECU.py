@@ -19,7 +19,7 @@ class ECU(skin_dataset, metaclass=SingletonMeta):
         super().__init__('ECU')
         self.gt = os.path.join(self.dir, 'skin_masks')
         self.ori = os.path.join(self.dir, 'origin_images')
-        # TODO: re-generate split from Skinny ipynb and set self.import_csv = ..
+        self.import_csv = os.path.join(self.dir, 'ECU.csv')
     
     def reset(self, predefined: bool = True) -> str:
         trace = super().reset(predefined=predefined)

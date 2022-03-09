@@ -1,7 +1,8 @@
 __pycache__
 predictions
 venv
-dataset
+dataset/*
+!dataset/*.zip
 models/*.csv
 debug.log
 logs

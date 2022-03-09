@@ -78,7 +78,7 @@ eg. measure metrics of model light on dataset medium:
 
 
 Some pre-trained models are provided into the `models` folder; to use a model, unzip it.  
-Pre-defined dataset splits featured in the thesis are provided into the `dataset` folder; to use a pre-defined file, unzip it to its dataset's directory (eg. place `HGR_data.csv` into `dataset/HGR`).  
+Pre-defined dataset splits featured in the thesis are provided into the `dataset` folder; to use a pre-defined file, unzip it to its dataset's directory (eg. place `HGR_data.csv` into `dataset/HGR_small`).  
 
 # Public datasets supported
 
