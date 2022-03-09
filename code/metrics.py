@@ -1,123 +1,16 @@
 import math
-import os
 
 import numpy as np
-from PIL import Image
-from tqdm import tqdm
 
 # Measure the goodness of the classifier by comparing predictions with groundtruths
+
+# In skin detection, false negatives may weight more as they cannot be fixed by post-processing
+# whereas false positives can to a degree
 
 
 # Prevent zero division
 smooth = 1e-20
 
-def load_images(gt_path: str, pred_path: str, threshold: int = 128):
-    '''Load images as numpy boolean arrays'''
-    # Load as grayscale uint8
-    gt_gray = np.array(Image.open(gt_path).convert('L'))
-    pred_gray = np.array(Image.open(pred_path).convert('L'))
-    # Binarize and convert to bool
-    gt_bool = gt_gray > threshold
-    pred_bool = pred_gray > threshold
-    return gt_bool, pred_bool
-
-# MEDIUM AVERAGE: calculate average only of medium-scores (PRecision, REcall, SPecificity)
-# Note: y and p files must have the same filename
-def pd_metrics(gt_dir: str, pred_dir: str, metric_fns: list, threshold: int = 128) -> list:
-    out = []
-
-    for y_filename in tqdm(os.listdir(gt_dir)):
-        y_path = os.path.join(gt_dir, y_filename)
-        p_filename = os.path.splitext(y_filename)[0] + '.png'
-        p_path = os.path.join(pred_dir, p_filename) # pred are always PNG
-
-        # Start adding item data into a structure
-        idata = {}
-        idata['y'] = y_path
-        idata['p'] = p_path
-
-        # Load images from paths and apply threshold to binarize
-        # the skin probability maps obtained from predictions
-        y_true, y_pred = load_images(y_path, p_path, threshold)
-        confmat = confmat_scores(y_true, y_pred)
-
-        # Calculate metrics for the image pair loaded
-        for metric_fn in metric_fns:
-            f_name = metric_fn.__name__
-            f_argcount = metric_fn.__code__.co_argcount # amount of argument in function definition
-
-            if f_name.endswith('_medium'): # is a medium-average metric, must not compute now
-                continue
-
-            # only one args: the metric only uses confusion matrix scores and is LUT-optimized
-            if f_argcount == 1:
-                idata[f_name] = metric_fn(confmat)
-            # two args: confusion matrix scores aren't enough
-            else:
-                idata[f_name] = metric_fn(y_true, y_pred)
-        
-        # Update the final data list
-        out.append(idata)
-    
-    print(f'  Found {len(out)} matches')
-    
-    return out
-
-def print_pd_mean(total: list, metric_fns: list, desc: str) -> None:
-    '''
-    Print human-readable metrics results data
-    
-    
-    PLEASE NOTE
-    ---
-    The mean F1 value calculated by summing all experiments F1 and dividing by N elements
-    is different than the mean calculated by applying the F1 formula on average REcall and PRecision!
-
-    #### Medium Averaging
-    In the code I call 'medium average' the metrics in which I average only the
-    medium-scores (PRecision, REcall, SPecificity)
-    and in the end I calculate the functions of the 'final' metrics (F1, dprs) using these averages
-
-    'Medium' as in their formulas they use the basic metrics (the ones in a confusion matrix:
-    True Positives, False Negatives, ..), while 'final' metrics
-    use the medium metrics themselves in their formulas.
-
-    By following this logic, 'final' averaging means calculating the final metrics
-    at the first step, along with the medium metrics, for each image and averaging
-    these values on the batch of images.
-
-    In a mathematical way:
-    f1: 2 * precision * recall / (precision + recall)
-    f1_finavg: avg(f1)
-    f1_medavg: 2 * avg(precision) * avg(recall) / (avg(precision) + avg(recall))
-
-    '''
-    print(f'{desc}')
-    res = {}
-    medium_avg = []
-
-    for metric_fn in metric_fns:
-        f_name = metric_fn.__name__
-        f_score = -99
-
-        if f_name.endswith('_medium'): # is a medium-average metric
-            medium_avg.append(metric_fn)
-            continue
-        else:
-            f_score = sum(d[f_name] for d in total) / len(total)
-            res[f_name] = f_score
-    
-    # The 'medium average' metrics average only the intermediate-scores (PRecision, REcall, SPecificity)
-    # and then calculate the functions of the final metrics
-    for metric_fn in medium_avg:
-        f_name = metric_fn.__name__
-        f_score = metric_fn(res['precision'], res['recall'], res['specificity'])
-        res[f_name] = f_score
-    
-    for key, value in sorted(res.items()):
-        print(f'{key}: {value}')
-    
-    return res
 
 def confmat_scores(y_true, y_pred) -> dict:
     '''
@@ -280,6 +173,10 @@ def mcc(cs):
     coefficient (MCC) over F1 score and accuracy in binary classification evaluation.
     BMC Genomics, 21(1).
     https://doi.org/10.1186/s12864-019-6413-7
+
+    ---
+    Info on F1 vs MCC from the paper analysis is simulated in
+    `tests/test_metrics.py -> mcc_unittest()`
     '''
 
     # The following fixes prevent where MCC could not be calculated normally

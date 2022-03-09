@@ -1,3 +1,5 @@
+import os
+
 import click
 import pandas as pd
 from predict import (base_preds, cross_preds, get_timestamp, make_predictions,
@@ -5,6 +7,7 @@ from predict import (base_preds, cross_preds, get_timestamp, make_predictions,
 from utils.db_utils import *
 from utils.ECU import ECU, ECU_bench
 from utils.logmanager import *
+from utils.metrics_utils import read_performance
 
 
 @click.group()
@@ -54,6 +57,10 @@ def bench(size, observations):
         assert os.path.isdir(ECU_bench().dir), 'Dataset has no directory: ' + ECU_bench().name
         make_predictions(image_paths, get_model_filename(ECU()),
             out_dir.format(k), out_bench=os.path.join(out_dir.format(k), '..', f'bench{k}.txt'))
+    
+    # Print inference times
+    read_performance(os.path.join(out_dir.format(0), '..'))
+
 
 @cli_predict.command(short_help='1-on-1 datasets prediction')
 @click.option('--model', '-m',

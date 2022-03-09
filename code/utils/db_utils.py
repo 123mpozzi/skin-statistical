@@ -1,5 +1,7 @@
 import os
 
+import cv2
+
 from utils.abd import abd
 from utils.ECU import ECU
 from utils.HGR import HGR
@@ -57,3 +59,41 @@ def gen_pred_folders(models: list, batch_type: str) -> list:
         return cross_folders
     else:
         return base_folders + cross_folders
+
+def bin2vdm(db: skin_dataset, out_dir):
+    '''
+    Convert boolean binary grountruths in the VDM grountruth format: 
+    red pixels where there is skin, overlayed over the original images
+
+    And update CSV file with the new gt path
+    '''
+    # read the images CSV
+    file_content = db.read_csv()
+
+    # rewrite csv file
+    with open(db.csv, 'w') as out:
+        for entry in file_content:
+            csv_fields = db.split_csv_fields(entry)
+            ori_path = csv_fields[0]
+            gt_path = csv_fields[1]
+            
+            # Process images
+
+            # load images
+            ori_im = cv2.imread(ori_path)
+            gt_im = cv2.imread(gt_path, cv2.IMREAD_GRAYSCALE)
+            # everything but skin
+            butsk = cv2.copyTo(ori_im, cv2.bitwise_not(gt_im))
+            # split the resulting channels
+            b,g,r = cv2.split(butsk)
+            # utilizzo la maschera come canale red (rossa al posto che bianca)
+            r = cv2.bitwise_or(r, gt_im)
+            # riunisco gli split con il nuovo canale red
+            res = cv2.merge([b,g,r])
+
+            cv2.imwrite(out_dir, res)
+            # Update gt path
+            csv_fields[1] = out_dir
+            
+            # Update db CSV
+            out.write(db.to_csv_row(*csv_fields))
