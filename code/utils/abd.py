@@ -5,7 +5,7 @@ from utils.skin_dataset import SingletonMeta, skin_dataset
 
 class abd(skin_dataset, metaclass=SingletonMeta):
     '''
-    abd-skin (2019) is a database composed of 1400 size-fixed abdominal pictures accurately
+    abd (2019) is a database composed of 1400 size-fixed abdominal pictures accurately
     selected to represent different ethnic groups and body mass indices. It has native test and
     train splits.
     `https://github.com/MRE-Lab-UMD/abd-skin-segmentation`
@@ -16,7 +16,7 @@ class abd(skin_dataset, metaclass=SingletonMeta):
     https://doi.org/10.1109/bibe.2019.00141
     '''
     def __init__(self):
-        super().__init__('abd-skin')
+        super().__init__('abd')
     
     def get_parts(self) -> list:
         return (abd_test(), abd_train())

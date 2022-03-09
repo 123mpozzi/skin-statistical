@@ -87,7 +87,7 @@ HGR [2]: 1558 hand gesture
     images. [Download][hgr]  
 Schmugge [3]: 845 images, mostly face shots. [Download][schmugge]  
 Pratheepan [4]: 78 pictures randomly sampled from the web. [Download][pratheepan]  
-abd-skin [5]: 1400 abdominal pictures. [Download][abd]  
+abd [5]: 1400 abdominal pictures. [Download][abd]  
 VPU [6]: 285 human activity recognition images. [Download][vpu]  
 UChile [7]: 101 images obtained from the web and digitized news videos. [Download][uchile]  
 

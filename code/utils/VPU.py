@@ -1,6 +1,38 @@
 import os
+import shutil
 
 from utils.skin_dataset import SingletonMeta, skin_dataset
+from utils.logmanager import *
+
+
+def rename_copy_dirs(db: skin_dataset, append_str: str = '_ren'):
+    '''
+    Copy the content of a dataset self.gt and self.ori into subfolders named
+    "renamed" and append a string to each filename
+
+    Return the new gt and ori folders created
+    '''
+    gt_dir = None
+    ori_dir = None
+    for item in [db.gt, db.ori]:
+        new_dir = os.path.join(item, 'renamed')
+        if item == db.gt:
+            gt_dir = new_dir
+        else:
+            ori_dir = new_dir
+        # Make a new dir
+        os.makedirs(new_dir, exist_ok=True)
+        for file in os.listdir(item):
+            basename = os.path.basename(file)
+            filename, ext = os.path.splitext(basename)
+            # rename each file
+            new_name = os.path.join(new_dir, filename + append_str + ext)
+            file_path = os.path.join(item, file)
+            # copy old content with new name into the new directory
+            if os.path.isfile(file_path) and not os.path.exists(new_name):
+                shutil.copy(file_path, new_name)
+    
+    return gt_dir, ori_dir
 
 
 class VPU(skin_dataset, metaclass=SingletonMeta):
@@ -46,6 +78,18 @@ class ED_test(skin_dataset, metaclass=SingletonMeta):
         self.gt, self.ori, self.new_gt = vpu_paths(self)
         self.gt_process = 'skin=0_0_255'
         self.note = self.nt_testing
+    
+    def reset(self, append: bool, predefined: bool = False):
+        # Make a new dir and copy the dataset content to it, with file renamed
+        # as the dataset filenames are in the same format as LIRIS_train
+        new_gt, new_ori = rename_copy_dirs(self, '_ren1')
+        # Update gt to the new folder containing renamed filenames
+        self.gt = new_gt
+        self.ori = new_ori
+
+        # Run the normal reset
+        trace = super().reset(append = append, predefined = predefined)
+        return trace
 
 class ED_train(skin_dataset, metaclass=SingletonMeta):
     def __init__(self):
@@ -71,6 +115,18 @@ class LIRIS_train(skin_dataset, metaclass=SingletonMeta):
         self.gt, self.ori, self.new_gt = vpu_paths(self)
         self.gt_process = 'skin=0_0_255'
         self.note = self.nt_training
+
+    def reset(self, append: bool, predefined: bool = False):
+        # Make a new dir and copy the dataset content to it, with file renamed
+        # as the dataset filenames are in the same format as SSG_train
+        new_gt, new_ori = rename_copy_dirs(self, '_ren2')
+        # Update gt to the new folder containing renamed filenames
+        self.gt = new_gt
+        self.ori = new_ori
+
+        # Run the normal reset
+        trace = super().reset(append = append, predefined = predefined)
+        return trace
 
 class SSG_test(skin_dataset, metaclass=SingletonMeta):
     def __init__(self):
