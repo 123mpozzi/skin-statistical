@@ -44,11 +44,29 @@ def pred_out(path_x: str, out_dir: str) -> list:
 
 # out_bench is the file in which append inference performance data
 def predict(probability, path_x, path_y, out_dir, out_bench: str = ''):
+    '''
+    Create a single prediction image
+
+    Also copy the original image and grountruth
+
+    #### No-grountruth image prediction
+    In case of a prediction over a single image which has no groundtruth, hence
+    is not a dataset image, the behaviour is a little different:
+
+    `path_y` will be None
+
+    `out_dir` is the prediction output filename
+
+    Original image and grountruth files are not copied
+    '''
     im = open_image(path_x)
     temp = im.copy()
     im.close()
 
-    out_p, out_y, out_x = pred_out(path_x, out_dir)
+    if path_y is not None:
+        out_p, out_y, out_x = pred_out(path_x, out_dir)
+    else:
+        out_p = out_dir
 
     # Save p
     t_elapsed = create_image(temp, probability, out_p)
@@ -57,9 +75,9 @@ def predict(probability, path_x, path_y, out_dir, out_bench: str = ''):
     temp.close()
 
     # Copy x and y
-    copyfile(path_x, out_x)
-    #if path_y is not None: # may also predict images without a groundtruth # TODO: future work
-    copyfile(path_y, out_y)
+    if path_y is not None: # if its a dataset image (has a groudntruth)
+        copyfile(path_x, out_x)
+        copyfile(path_y, out_y)
 
     # Save inference performance to file
     if out_bench: # empty strings are falsy
@@ -94,6 +112,7 @@ def create_image(im: Image, probability, out_p) -> float:
     return t_elapsed
 
 def make_predictions(image_paths, in_model, out_dir, out_bench: str = '', pbar_position: int = -1):
+    '''Predict over a list of images using the given model'''
     assert os.path.isfile(in_model), critical('Model file not existing: ' + in_model)
 
     info("Reading CSV...")
@@ -116,7 +135,7 @@ def make_predictions(image_paths, in_model, out_dir, out_bench: str = '', pbar_p
 
         # Try predicting
         try:
-            predict(probability, im_abspath, y_abspath, out_dir, out_bench) # this tests the data
+            predict(probability, im_abspath, y_abspath, out_dir, out_bench)
         # File not found, prediction algo fail, ..
         except Exception:
             error(f'Failed to infer on image: {im_abspath}')

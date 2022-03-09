@@ -1,8 +1,10 @@
 import click
+import pandas as pd
 from predict import (base_preds, cross_preds, get_timestamp, make_predictions,
-                     pred_dir)
+                     pred_dir, predict)
 from utils.db_utils import *
 from utils.ECU import ECU, ECU_bench
+from utils.logmanager import *
 
 
 @click.group()
@@ -82,3 +84,30 @@ def single(model, predict_, from_, to, bar):
     model_name = get_model_filename(get_db_by_name(model))
     out_dir = pred_dir(None, None, name = f'{model}_on_{predict_}')
     make_predictions(image_paths[from_:to], model_name, out_dir, pbar_position=bar)
+
+@cli_predict.command(
+    short_help='Single image prediction')
+@click.option('--model', '-m',
+              type=click.Choice(skin_databases_names(get_models()), case_sensitive=False), required=True)
+@click.option('--path', '-p',
+              type=click.Path(exists=True), required=True,
+              help = 'Path to the image to predict on')
+def image(model, path):
+    '''
+    IMAGE: 1 model on 1 image prediction.
+    Image may not have a grountruth.
+    Result will be placed in the same directory as the input image.
+    '''
+    ori_name = os.path.basename(path)
+    ori_filename, _ = os.path.splitext(ori_name)
+
+    im_abspath = os.path.abspath(path)
+    im_dir = os.path.dirname(path)
+    p_out = os.path.join(im_dir, ori_filename + '_p.png')
+
+    assert os.path.isfile(path), 'Image file not existing: ' + path
+    # Make predictions
+    model_name = get_model_filename(get_db_by_name(model))
+    info("Reading CSV...")
+    probability = pd.read_csv(model_name) # getting the rows from csv
+    predict(probability, im_abspath, None, p_out)

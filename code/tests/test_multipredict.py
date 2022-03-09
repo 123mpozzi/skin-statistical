@@ -144,7 +144,6 @@ class TestMultipredict(unittest.TestCase):
                 p.reset(predefined=True)
                 # save runned prediction in the list
                 pred_name = f'{m.name}_on_{p.name}'
-                # TODO: debug if using all datasets: print just command list, or this list
                 predictions.append(pred_name)
                 # remove previous predictions
                 rm_folder(os.path.join(predictions_dir, pred_name))

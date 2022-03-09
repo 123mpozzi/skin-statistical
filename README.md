@@ -62,10 +62,16 @@ eg. use Schmugge model to print predictions on ECU test set:
 - **Predict** using multiprocessing:  
 `python main.py singlem -m <db-model> -p <db-predict>`  
 `python main.py batchm -m cross -t <db1> -t <db2> -t <db3> ..`  
+- **Predict** on an image which has no groundtruth:  
+`python main.py image -m <db-model> -p <path-to-image-to-predict>`  
+eg. predict on documentation image using ECU model:  
+`python main.py image -m ECU -p ..\docs\x\st-vincent-actor-album-art.jpg`  
 - Measure inference time:  
 `python main.py bench`  
 - Measure metrics:  
 `python main.py eval -p <path-to-predictions-dir>`  
+eg. measure metrics of model light on dataset medium:  
+`python main.py eval -p ..\predictions\light_on_medium`  
 - See all the available commands and their usage with `--help`:  
 `python main.py --help`  
 `python main.py train --help`  
@@ -87,6 +93,7 @@ UChile [7]: 101 images obtained from the web and digitized news videos. [Downloa
 
 To import a dataset, place it into the `dataset` folder and rename its root directory to match its name from the list above. For HGR, the downscaled versions of HGR2A and HGR2B are used, so it is referred to as HGR_small in the program, and so must be its folder.
 
+Datasets are not needed to perform predictions on a random image, models are enough (see command `python main.py image` in the previous section).
 
 ## Bibliography
 1. >   Phung, S., Bouzerdoum, A., & Chai, D. (2005). Skin segmentation using color pixel

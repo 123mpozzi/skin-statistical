@@ -50,7 +50,7 @@ class ED_test(skin_dataset, metaclass=SingletonMeta):
 class ED_train(skin_dataset, metaclass=SingletonMeta):
     def __init__(self):
         super().__init__(VPU().name)
-        self.name = 'ED_test'
+        self.name = 'ED_train'
         self.gt, self.ori, self.new_gt = vpu_paths(self)
         self.gt_process = 'skin=0_0_255'
         self.ori_format = 'img(.*)'

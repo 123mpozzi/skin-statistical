@@ -4,8 +4,6 @@ import click
 from metrics import *
 from utils.hash_utils import hash_dir
 
-# TODO: validation() --
-
 
 dump_dir = os.path.join('..', 'dumps')
 dump_filename = os.path.join(dump_dir, 'metrics_{}_{}.json')
