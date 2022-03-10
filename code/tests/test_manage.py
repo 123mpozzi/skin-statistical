@@ -2,7 +2,7 @@ import unittest
 
 from cli.manage import reset
 from click.testing import CliRunner
-from utils.db_utils import (skin_databases, skin_databases_names,
+from utils.db_utils import (get_datasets, skin_databases_names,
                             skin_databases_skintones)
 from utils.logmanager import *
 from utils.Schmugge import count_skintones
@@ -49,7 +49,7 @@ class TestReset(unittest.TestCase):
         runner = CliRunner()
 
         info('TESTING RESET-PREDEFINED COMMAND...')
-        for d in skin_databases:
+        for d in get_datasets():
             if d.import_csv is not None: # db has predefined splits
                 result = runner.invoke(reset, ['-d', d.name, '--predefined'])
                 # Command has no errors on run
@@ -57,7 +57,7 @@ class TestReset(unittest.TestCase):
                     f'Error running reset command with "-d {d.name} --predefined"\nResult: {result}')
         
         info('TESTING CSV CONTENT...')
-        for d in skin_databases:
+        for d in get_datasets():
             if d.import_csv is not None:
                 info('Testing db named ' + d.name)
 
@@ -80,14 +80,14 @@ class TestReset(unittest.TestCase):
         runner = CliRunner()
 
         info('TESTING RESET COMMAND...')
-        for d in skin_databases:
+        for d in get_datasets():
             result = runner.invoke(reset, ['-d', d.name])
             # Command has no errors on run
             self.assertEqual(result.exit_code, 0,
                 f'Error running reset command with "-d {d.name}"\nResult: {result}')
         
         info('TESTING CSV CONTENT...')
-        for d in skin_databases:
+        for d in get_datasets():
             # Not all filenames has same parameters as in import_csv
             if d.import_csv is not None:
                 info('Testing db named ' + d.name)

@@ -42,41 +42,79 @@ As can be seen in the second row, a probabilistic approach may have issues predi
 3. Select an image and read all its pixels
 4. If a particular RGB combinations probability of being skin is greater than a certain threshold (we assume it 0.555555) then consider that combination as skin pixel otherwise non_skin pixel
 
-# How to use
-
-- Create the folder `dataset` in the project root directory and place datasets into it (eg. dataset/Schmugge)  
-- Once added, datasets need processing to create a CSV file representing their images and masks, and splits:  
-`cd code`  
-`python main.py reset -d <db-name>`  
-- **Train** a model:  
-`python main.py train  -d <db-name>`
-- **Predict** over a dataset with  
-`python main.py single -m <db-model> -p <db-predict>`  
-eg. use Schmugge model to print predictions on ECU test set:  
-`python main.py single -m Schmugge -p ECU`  
-- **Predict** in batch mode on target datasets:  
-`python main.py batch -m base -t <db1> -t <db2> -t <db3> ..`  
-`python main.py batch -m cross -t <db1> -t <db2> -t <db3> ..`  
-- **Predict** using multiprocessing:  
-`python main.py singlem -m <db-model> -p <db-predict>`  
-`python main.py batchm -m cross -t <db1> -t <db2> -t <db3> ..`  
-- **Predict** on an image which has no groundtruth:  
-`python main.py image -m <db-model> -p <path-to-image-to-predict>`  
-eg. predict on documentation image using ECU model:  
-`python main.py image -m ECU -p ..\docs\x\st-vincent-actor-album-art.jpg`  
-- Measure inference time:  
-`python main.py bench`  
-- Measure metrics:  
-`python main.py eval -p <path-to-predictions-dir>`  
-eg. measure metrics of model light on dataset medium:  
-`python main.py eval -p ..\predictions\light_on_medium`  
-- See all the available commands and their usage with `--help`:  
-`python main.py --help`  
-`python main.py train --help`  
+# Usage
 
 
-Some pre-trained models are provided into the `models` folder; to use a model, unzip it.  
-Pre-defined dataset splits featured in the thesis are provided into the `dataset` folder; to use a pre-defined file, unzip it to its dataset's directory (eg. place `HGR_data.csv` into `dataset/HGR_small`).  
+## Setup
+
+Datasets: place downloaded datasets inside the `dataset` folder in the project root directory (eg. dataset/Schmugge).  
+>More information on this process can be read in the next section
+
+Models: pre-trained models are provided into the `models` folder; to use a model, unzip it.  
+
+Datasets splits: pre-defined dataset splits featured in the thesis are provided into the `dataset` folder; to use a pre-defined file, unzip it to its dataset's directory (eg. place `HGR_data.csv` into `dataset/HGR_small`).  
+
+
+Once added, datasets need processing to create a CSV file representing their images, masks, and splits:  
+```bash
+cd code
+python main.py reset -d <db-name>
+```
+
+## Train a model  
+```bash
+python main.py train  -d <db-name>
+```
+
+## Predict
+
+Over a dataset  
+```bash
+python main.py single -m <db-model> -p <db-predict>
+
+# eg. use Schmugge model to print predictions on ECU test set:  
+python main.py single -m Schmugge -p ECU  
+```
+In batch mode on target datasets  
+```bash
+# Target an arbitrary number of datasets with -t <db-name>
+python main.py batch -m base -t <db1> -t <db2> -t <db3>  
+python main.py batch -m cross -t <db1> -t <db2>  
+```
+
+Using multiprocessing  
+```bash
+python main.py singlem -m <db-model> -p <db-predict>  
+python main.py batchm -m cross -t <db1> -t <db2> -t <db3>  
+```
+
+On an image which has no groundtruth  
+```bash
+python main.py image -m <db-model> -p <path-to-image-to-predict>  
+
+# eg. predict on documentation image using ECU model:  
+python main.py image -m ECU -p ..\docs\x\st-vincent-actor-album-art.jpg  
+```
+
+## Measure inference time  
+```bash
+python main.py bench  
+```
+
+## Measure metrics  
+```bash
+python main.py eval -p <path-to-predictions-dir>  
+
+# eg. measure metrics of model 'light' on dataset 'medium':  
+python main.py eval -p ..\predictions\light_on_medium  
+```
+
+## See commands usage
+```bash
+python main.py --help  
+python main.py train --help  
+```
+
 
 # Public datasets supported
 
