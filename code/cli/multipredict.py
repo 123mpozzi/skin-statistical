@@ -207,10 +207,11 @@ def run_commands(commands: list, workers: int, debug: bool):
         gone, alive = psutil.wait_procs(procs_list, timeout=3)
         alive_procs = len(alive)
 
-def gen_base_cmds(models: list, workers: int, debug: bool = False):
+def gen_base_cmds(models: list, workers: int, debug: bool = False, output: str = ''):
     '''Return a list containing single commands needed to perform base dataset predictions'''
     commands = []
-    cmd_single = cmd_root + '--model={} --from={} --to={} --bar={}'
+    output_arg = '' if output == '' else f' --output={output}'
+    cmd_single = cmd_root + '--model={} --from={} --to={} --bar={}' + output_arg
 
     # Calculate workload and assign tasks
     workload, db_sizes, total_db_size = calculate_workload(models, workers, use_only_test_set=True)
@@ -224,10 +225,11 @@ def gen_base_cmds(models: list, workers: int, debug: bool = False):
         commands.extend(cmds_on_target)
     return commands
 
-def gen_cross_cmds(models: list, workers: int, debug: bool = False):
+def gen_cross_cmds(models: list, workers: int, debug: bool = False, output: str = ''):
     '''Return a list containing single commands needed to perform cross dataset predictions'''
     commands = []
-    cmd_single = cmd_root + '--model={} --predict={} --from={} --to={} --bar={}'
+    output_arg = '' if output == '' else f' --output={output}'
+    cmd_single = cmd_root + '--model={} --predict={} --from={} --to={} --bar={}' + output_arg
 
     # Calculate workload and assign tasks
 
@@ -308,7 +310,10 @@ def single_multi(model, predict_, workers, debug):
               help = 'Datasets to use (eg. -t ECU -t HGR_small -t medium)')
 @click.option('--workers', '-w', type=int, default=-1, help = 'Number of processes, default is auto')
 @click.option('--debug/--no-debug', '-d', 'debug', default=False, help = 'Print more info')
-def batch_multi(mode, target, workers, debug):
+@click.option('--output', '-o', default = '',
+              type=click.Path(exists=False),
+              help = 'Define the directory in which to save predictions')
+def batch_multi(mode, target, workers, debug, output):
     models = target
     assert len(models) > 1, 'Select at least 2 datasets!'
     # Check if the number of workers need to be automatically determined
@@ -316,13 +321,12 @@ def batch_multi(mode, target, workers, debug):
 
     # Determine commands to run
     if mode == 'base':
-        commands = gen_base_cmds(models, workers, debug=debug)
+        commands = gen_base_cmds(models, workers, debug=debug, output=output)
     elif mode == 'cross':
-        commands = gen_cross_cmds(models, workers, debug=debug)
+        commands = gen_cross_cmds(models, workers, debug=debug, output=output)
     else: # 'all' does either base+cross or skinbase+skincross, depending on --skintone
-        print('all')
-        commands = gen_base_cmds(models, workers, debug=debug)
-        commands.extend(gen_cross_cmds(models, workers, debug=debug))
+        commands = gen_base_cmds(models, workers, debug=debug, output=output)
+        commands.extend(gen_cross_cmds(models, workers, debug=debug, output=output))
 
     # start processes and do not wait
     run_commands(commands, workers, debug)

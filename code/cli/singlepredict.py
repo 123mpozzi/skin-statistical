@@ -70,7 +70,10 @@ def bench(size, observations):
 @click.option('--from', '-f', 'from_', type=int, default = 0, help = 'Slice start')
 @click.option('--to', '-t', type=int, default = -1, help='Slice end (index excluded)')
 @click.option('--bar', '-b', type=int, default = -1, help='Progress bar position (for multiprocessing)')
-def single(model, predict_, from_, to, bar):
+@click.option('--output', '-o', default = '',
+              type=click.Path(exists=False),
+              help = 'Define the directory in which to save predictions')
+def single(model, predict_, from_, to, bar, output):
     '''SINGLE: 1-on-1 datasets prediction. Can be on self too'''
     # prediction on self
     if predict_ is None:
@@ -89,7 +92,11 @@ def single(model, predict_, from_, to, bar):
     assert os.path.isdir(target_dataset.dir), 'Dataset has no directory: ' + target_dataset.name
     # Make predictions
     model_name = get_model_filename(get_db_by_name(model))
-    out_dir = pred_dir(None, None, name = f'{model}_on_{predict_}')
+    if output == '':
+        out_dir = pred_dir(None, None, name = f'{model}_on_{predict_}')
+    else:
+        out_dir = os.path.join(output, f'{model}_on_{predict_}')
+        os.makedirs(output, exist_ok=True)
     make_predictions(image_paths[from_:to], model_name, out_dir, pbar_position=bar)
 
 @cli_predict.command(

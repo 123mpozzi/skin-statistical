@@ -221,6 +221,12 @@ class dark(Schmugge, metaclass=SingletonMeta):
             self.augment()
         return trace
     
+    def get_all_paths(self) -> list:
+        paths = super().get_all_paths()
+        # Remove augmented files from paths, they are only for training
+        paths = [x for x in paths if 'aug' not in x[0] and 'aug' not in x[1]]
+        return paths
+    
     def augment(self):
         '''
         Apply Data Augmentation on all the TRAINING split defined
