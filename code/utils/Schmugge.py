@@ -132,7 +132,8 @@ class Schmugge(skin_dataset, metaclass=SingletonMeta):
                     ori_filename, _ = os.path.splitext(ori_basename)
                     gt_filename, _ = os.path.splitext(gt_basename)
 
-                    # process images
+                    # Process images
+
                     # load images
                     ori_im = cv2.imread(ori_path)
                     gt_im = cv2.imread(gt_path)
@@ -165,7 +166,8 @@ class Schmugge(skin_dataset, metaclass=SingletonMeta):
                         # what isn't bg is white
                         sk = cv2.bitwise_not(mask)
                         gt_im = sk
-                    # save processing 
+                    
+                    # Save processing 
                     cv2.imwrite(ori_out, ori_im)
                     cv2.imwrite(gt_out, gt_im)
 

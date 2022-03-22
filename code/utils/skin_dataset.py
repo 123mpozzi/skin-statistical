@@ -194,7 +194,6 @@ class skin_dataset(object):
             # Check if processing is required
             if self.ori_process is not None:
                 self.new_ori = process_images(self, self.ori, self.ori_process, self.new_ori, self.ori_format)
-            
             if self.gt_process is not None:
                 self.new_gt = process_images(self, self.gt, self.gt_process, self.new_gt, self.gt_format)
 
@@ -273,7 +272,7 @@ def get_variable_filename(filename: str, format: str) -> str:
         return None
 
 def analyze_dataset(db: skin_dataset, append: bool = False):
-    '''Creates CSV file containing dataset metadata (such as paths of images)'''
+    '''Create CSV file containing dataset metadata (such as paths of images)'''
     # Use gt/ori if not processed, else new_gt/new_ori
     gt_dir = db.gt
     ori_dir = db.ori

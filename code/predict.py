@@ -17,11 +17,15 @@ predictions_dir = os.path.join('..', 'predictions')
 def get_timestamp() -> str:
     return time.strftime("%Y%m%d-%H%M%S")
 
+def pred_name(name: str) -> str:
+    return name.lower().replace('hgr_small', 'hgr')
+
 def pred_dir(type: str, timestr: str, name: str) -> str:
     '''
     Return a proper directory to store predictions given
     prediction type, timestamp string, and predictions name/title
     '''
+    name = pred_name(name)
     if type in ('base', 'cross'):
         return os.path.join(predictions_dir, timestr, method_name, type, name)
     elif type == 'bench':

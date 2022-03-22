@@ -3,7 +3,7 @@ import os
 import click
 import pandas as pd
 from predict import (base_preds, cross_preds, get_timestamp, make_predictions,
-                     pred_dir, predict)
+                     pred_dir, predict, pred_name)
 from utils.db_utils import *
 from utils.ECU import ECU, ECU_bench
 from utils.logmanager import *
@@ -95,7 +95,8 @@ def single(model, predict_, from_, to, bar, output):
     if output == '':
         out_dir = pred_dir(None, None, name = f'{model}_on_{predict_}')
     else:
-        out_dir = os.path.join(output, f'{model}_on_{predict_}')
+        name = pred_name(f'{model}_on_{predict_}')
+        out_dir = os.path.join(output, name)
         os.makedirs(output, exist_ok=True)
     make_predictions(image_paths[from_:to], model_name, out_dir, pbar_position=bar)
 
