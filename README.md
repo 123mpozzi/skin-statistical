@@ -6,11 +6,12 @@
 [vpu]: http://www-vpu.eps.uam.es/publications/SkinDetDM/#dataset "VPU download page"
 [uchile]: http://web.archive.org/web/20070707151628/http://agami.die.uchile.cl/skindiff/ "UChile download page"
 
-
+[thesis]: https://github.com/123mpozzi/skin-detection-thesis "Human Skin Detection In Color Images"
 # Skin Statistical
-Detecting human skin using probability.
+Detecting human skin using probability.  
+This work is part of my [Bachelor thesis][thesis].
 
-This skin detector uses three-dimensional histograms to model the data and probability calculus to perform the classification.
+The skin detector uses three-dimensional histograms to model the data and probability calculus to perform the classification.
 
 #### Credits
 Credits to the author of the original version: 
@@ -19,10 +20,14 @@ https://github.com/Chinmoy007/Skin-detection
 
 ## Outcomes
 
-![Outcomes](docs/outcomes.png "Outcomes")
-> Significant outcomes: (a) the input image; (b) the ground truth; (c) detected skin pixels.  
-Input images are from ECU, HGR, and Schmugge datasets.
-Various models have been used to detect skin pixels.
+<div align="center">
+    <img src="docs/outcomes.png" alt="Outcomes" title="Outcomes">
+    <br>
+    Significant outcomes: (a) the input image; (b) the ground truth; (c) detected skin pixels.<br>
+    Input images are from ECU, HGR, and Schmugge datasets.
+    Various models have been used to detect skin pixels.
+</div>
+<br>
 
 These are some significant outcomes (hence not representative; for the skin detector performance see [Performance](#Performance))
 that shows how well the skin detector performs given the right training dataset,
@@ -172,7 +177,7 @@ On an image which has no groundtruth
 python main.py image -m <db-model> -p <path-to-image-to-predict>  
 
 # eg. predict on documentation image using ECU model:  
-python main.py image -m ECU -p ..\docs\x\st-vincent-actor-album-art.jpg  
+python main.py image -m ECU -p ../docs/x/st-vincent-actor-album-art.jpg  
 ```
 
 #### Measure inference time  
@@ -185,7 +190,7 @@ python main.py bench
 python main.py eval -p <path-to-predictions-dir>  
 
 # eg. measure metrics of model 'light' on dataset 'medium':  
-python main.py eval -p ..\predictions\light_on_medium  
+python main.py eval -p ../predictions/light_on_medium  
 ```
 
 #### See commands usage
