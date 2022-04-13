@@ -306,7 +306,7 @@ def single_multi(model, predict_, workers, debug):
 @cli_multipredict.command(name='batchm', short_help='Multiprocessing on batch predictions (eg. base, cross)')
 @click.option('--mode', '-m', type=click.Choice(['base', 'cross', 'all']), required=True)
 @click.option('--target' , '-t',  multiple=True,
-              type=click.Choice(skin_databases_names(get_models()), case_sensitive=False),
+              type=click.Choice(skin_databases_names(get_models_with_datasets()), case_sensitive=False),
               help = 'Datasets to use (eg. -t ECU -t HGR_small -t medium)')
 @click.option('--workers', '-w', type=int, default=-1, help = 'Number of processes, default is auto')
 @click.option('--debug/--no-debug', '-d', 'debug', default=False, help = 'Print more info')

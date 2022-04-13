@@ -48,6 +48,14 @@ def get_datasets() -> list:
     result = [x for x in skin_databases if os.path.isdir(x.dir)]
     return result
 
+def get_models_with_datasets() -> list:
+    '''
+    Return the list of skin datasets having a trained model file
+    and actually existing in the file manager
+    '''
+    result = [x for x in skin_databases if x in get_models() and x in get_datasets()]
+    return result
+
 def gen_pred_folders(models: list, batch_type: str) -> list:
     '''Generate folders filenames given a type of batch prediction and model list'''
     base_folders = [f'{x.name}_on_{x.name}' for x in models]

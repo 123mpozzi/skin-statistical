@@ -17,7 +17,7 @@ def cli_predict():
 @cli_predict.command(short_help='N-on-M datasets predictions')
 @click.option('--mode', '-m', type=click.Choice(['base', 'cross', 'all']), required=True)
 @click.option('--dataset' , '-d',  multiple=True,
-              type=click.Choice(skin_databases_names(get_models()), case_sensitive=False), required = True,
+              type=click.Choice(skin_databases_names(get_models_with_datasets()), case_sensitive=False), required = True,
               help = 'Datasets to use (eg. -d ECU -d HGR_small -d medium)')
 def batch(mode, dataset):
     '''

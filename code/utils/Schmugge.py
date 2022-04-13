@@ -210,7 +210,8 @@ class dark(Schmugge, metaclass=SingletonMeta):
         # Note: the thesis used data-augmentation for dark
         # Images are in newdata folder
         self.import_csv = os.path.join(self.dir, 'dark2305_1309.csv')
-        self.import_configuration()
+        if os.path.isfile(self.import_csv):
+            self.import_configuration()
     
     def reset(self, predefined: bool = True) -> str:
         trace = super().reset(predefined = predefined)
@@ -330,7 +331,8 @@ class light(Schmugge, metaclass=SingletonMeta):
         self.name = self.sk_light
         self.csv = os.path.join(self.dir, 'light.csv')
         self.import_csv = os.path.join(self.dir, 'light2305_1420.csv')
-        self.import_configuration()
+        if os.path.isfile(self.import_csv):
+            self.import_configuration()
     
     def reset(self, predefined: bool = True) -> str:
         trace = super().reset(predefined = predefined)
@@ -349,7 +351,8 @@ class medium(Schmugge, metaclass=SingletonMeta):
         self.name = self.sk_medium
         self.csv = os.path.join(self.dir, 'medium.csv')
         self.import_csv = os.path.join(self.dir, 'medium2305_1323.csv')
-        self.import_configuration()
+        if os.path.isfile(self.import_csv):
+            self.import_configuration()
 
     def reset(self, predefined: bool = True) -> str:
         trace = super().reset(predefined = predefined)
